@@ -4,13 +4,13 @@ set -euo pipefail
 
 case "${1:-diagnose}" in
   -h|--help)
-    echo 'Usage: bash scripts/macos-check.sh [diagnose|setup|browser]'
+    echo 'Usage: bash scripts/macos-check.sh [diagnose|setup|browser|browser-radiokot]'
     echo 'diagnose: prepare Python dependencies if needed and check public search access.'
     echo 'setup: install dependencies only. No command starts the Telegram bot.'
     echo 'browser: open three public searches in a separate visible Chromium profile.'
     exit 0
     ;;
-  diagnose|setup|browser) mode="${1:-diagnose}" ;;
+  diagnose|setup|browser|browser-radiokot) mode="${1:-diagnose}" ;;
   *) echo 'Unknown command. Use --help.' >&2; exit 2 ;;
 esac
 
@@ -61,13 +61,18 @@ if [[ "$mode" == setup ]]; then
 fi
 
 mkdir -p data
-if [[ "$mode" == browser ]]; then
+if [[ "$mode" == browser || "$mode" == browser-radiokot ]]; then
   export PLAYWRIGHT_BROWSERS_PATH="$repo_root/data/playwright-browsers"
   echo 'Устанавливаю компоненты обычной браузерной проверки…'
   PIP_DISABLE_PIP_VERSION_CHECK=1 "$venv_python" -m pip install --quiet -r requirements-browser.lock
   "$venv_python" -m playwright install chromium
-  echo 'Откроются RadioKot, Ozon и Wildberries по очереди. Не входите в аккаунты и не решайте CAPTCHA.'
-  "$venv_python" -u -m dmr_bot.browser_check
+  if [[ "$mode" == browser-radiokot ]]; then
+    echo 'Проверяется только RadioKot. Ozon и Wildberries повторно не запрашиваются.'
+    "$venv_python" -u -m dmr_bot.browser_check --sources radiokot --output data/macos-radiokot-report.json
+  else
+    echo 'Откроются RadioKot, Ozon и Wildberries по очереди. Не входите в аккаунты и не решайте CAPTCHA.'
+    "$venv_python" -u -m dmr_bot.browser_check
+  fi
   exit 0
 fi
 # This is a distinct machine/network. Reuse its own saved backoff across checks.

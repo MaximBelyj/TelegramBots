@@ -69,3 +69,28 @@ class FetchRadioTests(unittest.IsolatedAsyncioTestCase):
         with patch('dmr_bot.discovery.httpx.AsyncClient', side_effect=lambda **kwargs: real_client(transport=transport, **kwargs)):
             items = await fetch_search('platan', 'Реле давления РД-301')
         self.assertEqual(items[0][1]['title'], 'Реле давления РД-301')
+
+
+class RadioKotLayoutTests(unittest.TestCase):
+    def test_search_form_can_coexist_with_post_results(self):
+        html = '''<form action="./search.php"><input name="keywords"></form>
+        <div class="search post"><h3><a href="./viewtopic.php?f=51&amp;t=123&amp;p=456#p456">LM358</a></h3>
+        <a class="arrow-right" href="./viewtopic.php?t=999&amp;p=1">LM358</a></div>'''
+        items = parse_search(html, 'radiokot', 'LM358')
+        self.assertEqual(len(items), 1)
+        self.assertTrue(items[0][0].endswith('?t=123'))
+
+    def test_fallback_supports_unstyled_titles_excludes_navigation(self):
+        html = '''<a href="./viewtopic.php?t=123">LM358</a>
+        <a href="./viewtopic.php?t=123&amp;p=456">Перейти к сообщению LM358</a>
+        <a class="arrow-right" href="./viewtopic.php?t=456">LM358</a>
+        <a href="./viewtopic.php?t=123">2</a>'''
+        items = parse_search(html, 'radiokot', 'LM358')
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0][1]['title'], 'LM358')
+
+    def test_navigation_alone_is_not_empty_success(self):
+        html = '<a class="arrow-right" href="./viewtopic.php?t=456">LM358</a>'
+        with self.assertRaises(SourceUnavailable):
+            parse_search(html, 'radiokot', 'LM358')
+        self.assertEqual(parse_search('<div>Подходящих сообщений не найдено</div>', 'radiokot', 'LM358'), [])

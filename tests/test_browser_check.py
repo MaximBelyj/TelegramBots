@@ -34,3 +34,16 @@ class BrowserDiagnosticTests(unittest.TestCase):
         html = '<a href="/product/radio-123/">Радиостанция DMR</a>'
         row = summarize_navigation('ozon', html, 'https://www.ozon.ru/search/?text=DMR', [], 'TimeoutError')
         self.assertEqual(row['classification'], 'navigation_incomplete')
+
+    def test_radiokot_posts_with_search_forms_are_results(self):
+        html = '''<form action="./search.php"><input name="keywords"></form>
+        <h3><a href="./viewtopic.php?t=123">LM358</a></h3>'''
+        row = inspect_document('radiokot', html, 'https://radiokot.ru/forum/search.php?keywords=LM358')
+        self.assertEqual(row['classification'], 'results')
+        self.assertEqual(row['candidate_count'], 1)
+
+    def test_forum_links_do_not_prove_search_form_only(self):
+        html = '''<form><input name="keywords"></form>
+        <a class="arrow-right" href="./viewtopic.php?t=123"></a>'''
+        row = inspect_document('radiokot', html, 'https://radiokot.ru/forum/search.php?keywords=LM358')
+        self.assertEqual(row['classification'], 'forum_layout_unrecognized')

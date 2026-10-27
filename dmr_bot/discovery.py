@@ -64,6 +64,31 @@ def canonical_url(url):
     return urlunsplit((p.scheme, p.netloc, p.path, query, ''))
 
 
+def forum_topic_anchors(soup):
+    # phpBB can render search hits as post headings, not only .topictitle links.
+    headings = soup.select('a.topictitle[href], h3 a[href*="viewtopic.php"], h2 a[href*="viewtopic.php"], a.topic-title[href]')
+    anchors = headings or soup.select('a[href*="viewtopic.php"]')
+    selected = []
+    for anchor in anchors:
+        text = anchor.get_text(' ', strip=True)
+        if not text or 'arrow-right' in anchor.get('class', []):
+            continue
+        if re.fullmatch(r'(?:[0-9]+|[<>»«]+|re:?)', text, re.I):
+            continue
+        if text.lower().startswith(('перейти к сообщению', 'к последнему сообщению', 'go to post', 'view latest post')):
+            continue
+        # Reject external links, post-only permalinks and navigation without a topic ID.
+        try:
+            href = urljoin(search_url('radiokot', ''), anchor.get('href', ''))
+            canonical_url(href)
+        except ValueError:
+            continue
+        p = urlsplit(href)
+        if p.hostname.removeprefix('www.') == 'radiokot.ru' and p.path == '/forum/viewtopic.php':
+            selected.append(anchor)
+    return selected
+
+
 def parse_search(html, source, query, *, filter_results=True):
     soup = BeautifulSoup(html, 'html.parser')
     title = soup.title.get_text(' ', strip=True).casefold() if soup.title else ''
@@ -72,6 +97,8 @@ def parse_search(html, source, query, *, filter_results=True):
     page_text = soup.get_text(' ', strip=True).lower()
     count = soup.select_one('h1 sub') if source == 'platan' else None
     if count is not None and count.get_text(strip=True) == '0':
+        return []
+    if source == 'radiokot' and any(phrase in page_text for phrase in ('подходящих сообщений не найдено', 'подходящих тем не найдено')):
         return []
     if source == 'promelec' and re.search(r'найдено:\s*0\s+товар', page_text):
         return []
@@ -123,7 +150,8 @@ def parse_search(html, source, query, *, filter_results=True):
         except (ValueError, TypeError):
             pass
     product_links = 0
-    for anchor in soup.select(SELECTORS.get(source, 'a[href]')):
+    anchors = forum_topic_anchors(soup) if source == 'radiokot' else soup.select(SELECTORS.get(source, 'a[href]'))
+    for anchor in anchors:
         href = anchor.get('href', '')
         if not re.search(PATHS[source], urlsplit(urljoin(base, href)).path):
             continue

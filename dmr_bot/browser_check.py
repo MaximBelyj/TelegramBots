@@ -30,7 +30,10 @@ def inspect_document(source, html, url):
     topic_links = soup.select('a[href*="viewtopic.php"]')
     topic_classes = sorted({c for a in topic_links for c in a.get('class', [])})
     result = {'classification': 'unknown_layout', 'candidate_count': None,
-              'forms': forms, 'topic_link_count': len(topic_links), 'topic_link_classes': topic_classes}
+              'forms': forms, 'topic_link_count': len(topic_links), 'topic_link_classes': topic_classes,
+              'topic_link_structures': [{'parent_tag': a.parent.name,
+                 'parent_classes': a.parent.get('class', []),
+                 'link_classes': a.get('class', [])} for a in topic_links[:8]]}
     if challenge:
         result['classification'] = 'challenge'
         return result
@@ -49,6 +52,8 @@ def inspect_document(source, html, url):
     except SourceUnavailable as exc:
         if exc.code == 'challenge':
             result['classification'] = 'challenge'
+        elif source == 'radiokot' and topic_links:
+            result['classification'] = 'forum_layout_unrecognized'
         elif source == 'radiokot' and any(set(f['fields']) & {'keywords', 'search_keywords'} for f in forms):
             result['classification'] = 'search_form_instead_of_results'
     return result
@@ -72,12 +77,24 @@ async def check_source(browser, source, interactive=True, wait_seconds=8):
     context = await browser.new_context()  # No personal/persistent profile or stored credentials.
     page = await context.new_page()
     statuses = []
+    denied = False
+
+    async def guard(route):
+        if denied and route.request.resource_type == 'document':
+            await route.abort()
+        else:
+            await route.continue_()
+
+    await context.route('**/*', guard)
 
     def response_seen(response):
+        nonlocal denied
         req = response.request
         if req.resource_type == 'document' and req.frame == page.main_frame:
             p = urlsplit(response.url)
             statuses.append({'status': response.status, 'host': p.hostname, 'path': p.path})
+            if response.status in (401, 403, 429, 498):
+                denied = True
 
     page.on('response', response_seen)
     try:
