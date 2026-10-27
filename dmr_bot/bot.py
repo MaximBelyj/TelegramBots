@@ -10,7 +10,7 @@ from aiogram.filters import Command
 from aiogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup,
                            KeyboardButton, Message, ReplyKeyboardMarkup)
 from .discovery import SOURCES, discover, search_url
-from .preferences import Preferences
+from .access import allowed_users, attach_users
 from .search_engine import SearchEngine
 
 MENU = ReplyKeyboardMarkup(keyboard=[
@@ -56,8 +56,8 @@ def render_report(query, reports):
 
 def create_router(bot, owner, prefs, engine=None):
     router = Router()
-    router.message.filter(F.from_user.id == owner, F.chat.type == 'private')
-    router.callback_query.filter(F.from_user.id == owner, F.message.chat.type == 'private')
+    router.message.filter(F.from_user.id == owner, F.chat.type == 'private', F.chat.id == owner)
+    router.callback_query.filter(F.from_user.id == owner, F.message.chat.type == 'private', F.message.chat.id == owner)
     pending = set()
     lock = asyncio.Lock()
     tasks = {'manual': None, 'auto': None, 'diagnostic': None}
@@ -286,17 +286,17 @@ def create_router(bot, owner, prefs, engine=None):
 async def run():
     owner = int(os.environ['TELEGRAM_OWNER_ID'])
     path = Path(os.getenv('DMR_SETTINGS_PATH', 'data/preferences.sqlite3'))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    prefs = Preferences(path)
+    users = allowed_users(owner, os.getenv('DMR_ACCESS_PATH', 'data/access.json'))
     bot = Bot(os.environ['TELEGRAM_BOT_TOKEN'], session=EnvironmentSession())
     dp = Dispatcher()
     engine = SearchEngine(os.getenv('DMR_HEALTH_PATH', 'data/source_health.json'))
-    dp.include_router(create_router(bot, owner, prefs, engine))
+    databases = attach_users(dp, bot, owner, path, users, engine)
     try:
         await dp.start_polling(bot)
     finally:
         await engine.close()
-        prefs.db.close()
+        for prefs in databases.values():
+            prefs.db.close()
         await bot.session.close()
 
 
