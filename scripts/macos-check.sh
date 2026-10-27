@@ -4,12 +4,13 @@ set -euo pipefail
 
 case "${1:-diagnose}" in
   -h|--help)
-    echo 'Usage: bash scripts/macos-check.sh [diagnose|setup]'
+    echo 'Usage: bash scripts/macos-check.sh [diagnose|setup|browser]'
     echo 'diagnose: prepare Python dependencies if needed and check public search access.'
-    echo 'setup: install dependencies only. Neither command starts the Telegram bot.'
+    echo 'setup: install dependencies only. No command starts the Telegram bot.'
+    echo 'browser: open three public searches in a separate visible Chromium profile.'
     exit 0
     ;;
-  diagnose|setup) mode="${1:-diagnose}" ;;
+  diagnose|setup|browser) mode="${1:-diagnose}" ;;
   *) echo 'Unknown command. Use --help.' >&2; exit 2 ;;
 esac
 
@@ -60,6 +61,15 @@ if [[ "$mode" == setup ]]; then
 fi
 
 mkdir -p data
+if [[ "$mode" == browser ]]; then
+  export PLAYWRIGHT_BROWSERS_PATH="$repo_root/data/playwright-browsers"
+  echo 'Устанавливаю компоненты обычной браузерной проверки…'
+  PIP_DISABLE_PIP_VERSION_CHECK=1 "$venv_python" -m pip install --quiet -r requirements-browser.lock
+  "$venv_python" -m playwright install chromium
+  echo 'Откроются RadioKot, Ozon и Wildberries по очереди. Не входите в аккаунты и не решайте CAPTCHA.'
+  "$venv_python" -u -m dmr_bot.browser_check
+  exit 0
+fi
 # This is a distinct machine/network. Reuse its own saved backoff across checks.
 export DMR_HEALTH_PATH="$repo_root/data/source_health.macos.json"
 echo 'Проверяю доступ из сети Mac. Токен Telegram не нужен; бот не запускается.'
