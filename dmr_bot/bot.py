@@ -11,6 +11,7 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMa
                            KeyboardButton, Message, ReplyKeyboardMarkup)
 from .discovery import SOURCES, discover, search_url
 from .preferences import Preferences
+from .search_engine import SearchEngine
 
 MENU = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='🔎 Найти сейчас'), KeyboardButton(text='📋 Изделия')],
@@ -53,13 +54,13 @@ def render_report(query, reports):
     return '\n\n'.join(lines)
 
 
-def create_router(bot, owner, prefs):
+def create_router(bot, owner, prefs, engine=None):
     router = Router()
     router.message.filter(F.from_user.id == owner, F.chat.type == 'private')
     router.callback_query.filter(F.from_user.id == owner, F.message.chat.type == 'private')
     pending = set()
     lock = asyncio.Lock()
-    tasks = {'manual': None, 'auto': None}
+    tasks = {'manual': None, 'auto': None, 'diagnostic': None}
 
     async def send(text, markup=None):
         for start in range(0, len(text), 3800):
@@ -74,7 +75,7 @@ def create_router(bot, owner, prefs):
             for query in queries:
                 # Re-read scope each time so settings changes affect the next item.
                 source = prefs.get('source')
-                reports = await discover(query, None if source == 'all' else [source])
+                reports = await (engine.discover(query, None if source == 'all' else [source]) if engine else discover(query, None if source == 'all' else [source]))
                 await send(('Автопоиск\n' if automatic else '') + render_report(query, reports))
                 await asyncio.sleep(3)
 
@@ -142,6 +143,16 @@ def create_router(bot, owner, prefs):
         title = {'view': 'Список изделий', 'find': 'Выберите изделие для поиска', 'delete': 'Выберите изделие для удаления'}[mode]
         await send(f'{title}: {len(items)}. Страница {page + 1}/{pages}.\n' + ('Список пуст. Нажмите «➕ Добавить».' if not items else ''), keyboard(rows) if rows else MENU)
 
+    async def diagnose_sources():
+        try:
+            await engine.probe()
+            await send('Проверка источников завершена.\n\n' + '\n\n'.join(SOURCES[key][0] + ': ' + engine.status_text(key) for key in SOURCES), MENU)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logging.warning('Source diagnostics failed: %s', type(exc).__name__)
+            await send('Не удалось завершить диагностику источников.', MENU)
+
     @router.message(Command('start', 'help', 'menu'))
     async def home(message: Message):
         pending.discard(owner)
@@ -174,6 +185,12 @@ def create_router(bot, owner, prefs):
             if source in (*SOURCES, 'all'):
                 prefs.set('source', source)
                 await send(f'Место поиска: {source_label()}.', MENU)
+        elif data == 'health:check' and engine:
+            if (tasks['diagnostic'] and not tasks['diagnostic'].done()) or lock.locked():
+                await send('Поиск или проверка уже идёт. Дождитесь завершения или остановите поиск.')
+                return
+            await send('Проверяю доступ к источникам. Сайты на защитной паузе повторно не запрашиваются.', MENU)
+            tasks['diagnostic'] = asyncio.create_task(diagnose_sources())
         elif data in ('auto:on', 'auto:off'):
             if data == 'auto:on' and not prefs.items():
                 await send('Сначала добавьте хотя бы одно изделие.', MENU)
@@ -219,9 +236,12 @@ def create_router(bot, owner, prefs):
             await send('Отправьте название изделия. Можно несколько названий, каждое с новой строки. Для отмены: /menu.', MENU)
         elif text == '🏪 Площадки':
             pending.discard(owner)
-            rows = [[(name, f'source:{key}')] for key, (name, _) in SOURCES.items()]
+            rows = [[((('✅ ' if engine.state(key)['status'] == 'ready' else '🔗 ') if engine else '') + name, f'source:{key}')] for key, (name, _) in SOURCES.items()]
             rows.append([('Все сразу', 'source:all')])
-            await send(f'Сейчас: {source_label()}. Выберите место поиска:', keyboard(rows))
+            if engine:
+                rows.append([('Проверить доступность', 'health:check')])
+            statuses = ('\n\n' + '\n'.join(SOURCES[key][0] + ': ' + engine.status_text(key) for key in SOURCES)) if engine else ''
+            await send(f'Сейчас: {source_label()}. Выберите место поиска. ✅ — последняя проверка успешна, 🔗 — ручная ссылка или пауза.' + statuses, keyboard(rows))
         elif text == '⏱ Автопоиск':
             pending.discard(owner)
             await send(f'Автопоиск {"включён" if prefs.get("auto") == "on" else "выключен"}. При включении: сразу, затем пауза 30 минут после каждого полного цикла. Повторные результаты могут приходить снова, история не хранится.', keyboard([[('Включить', 'auto:on'), ('Выключить', 'auto:off')]]))
@@ -229,6 +249,7 @@ def create_router(bot, owner, prefs):
             pending.discard(owner)
             await set_auto(False)
             await stop_task('manual')
+            await stop_task('diagnostic')
             await send('Все текущие поиски остановлены. Автопоиск выключен.', MENU)
         elif owner in pending and text:
             added = duplicates = 0
@@ -255,6 +276,7 @@ def create_router(bot, owner, prefs):
     async def shutdown():
         await stop_task('auto')
         await stop_task('manual')
+        await stop_task('diagnostic')
 
     router.startup.register(startup)
     router.shutdown.register(shutdown)
@@ -268,10 +290,12 @@ async def run():
     prefs = Preferences(path)
     bot = Bot(os.environ['TELEGRAM_BOT_TOKEN'], session=EnvironmentSession())
     dp = Dispatcher()
-    dp.include_router(create_router(bot, owner, prefs))
+    engine = SearchEngine(os.getenv('DMR_HEALTH_PATH', 'data/source_health.json'))
+    dp.include_router(create_router(bot, owner, prefs, engine))
     try:
         await dp.start_polling(bot)
     finally:
+        await engine.close()
         prefs.db.close()
         await bot.session.close()
 

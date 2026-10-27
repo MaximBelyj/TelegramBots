@@ -27,6 +27,9 @@ PATHS = {'avito': r'_[0-9]+$', 'ozon': r'^/product/[^/]+',
          'promelec': r'^/product/[0-9]+/?$',
          'qrz': r'^/classifieds/detail/[^/]+/?$',
          'radiokot': r'^/forum/viewtopic\.php$'}
+QUERY_PARAMS = {'avito': 'q', 'ozon': 'text', 'wb': 'search', 'market': 'text',
+                'chipdip': 'searchtext', 'platan': 'code', 'promelec': 'query',
+                'qrz': 'q', 'radiokot': 'keywords'}
 SELECTORS = {'platan': 'a[href*="/cgi-bin/qwery.pl/id="]',
              'promelec': 'a.product-preview__title[href]',
              'qrz': '.classified_list .adv_classified .Title a[href]',
@@ -35,7 +38,10 @@ ACCESSORIES = re.compile(r'антенн|аккумулятор|батаре|че
 
 
 class SourceUnavailable(ValueError):
-    pass
+    def __init__(self, message, code='layout', retry_after=None):
+        super().__init__(message)
+        self.code = code
+        self.retry_after = retry_after
 
 
 def search_url(source, query):
@@ -62,7 +68,7 @@ def parse_search(html, source, query, *, filter_results=True):
     soup = BeautifulSoup(html, 'html.parser')
     title = soup.title.get_text(' ', strip=True).casefold() if soup.title else ''
     if any(word in title for word in ('captcha', 'капч', 'доступ ограничен', 'доступ запрещ', 'проверка браузера', 'access denied', 'ddos-guard', 'just a moment')) or soup.select_one('form[action*="showcaptcha"]'):
-        raise SourceUnavailable('Площадка требует проверку доступа/CAPTCHA')
+        raise SourceUnavailable('Площадка требует проверку доступа/CAPTCHA', 'challenge')
     page_text = soup.get_text(' ', strip=True).lower()
     count = soup.select_one('h1 sub') if source == 'platan' else None
     if count is not None and count.get_text(strip=True) == '0':
@@ -144,29 +150,64 @@ def parse_search(html, source, query, *, filter_results=True):
     return list(results.items())[:20]
 
 
-async def fetch_search(source, query, *, candidates=False):
+async def fetch_search(source, query, *, candidates=False, client=None, trace=None):
+    if client is None:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=False) as session:
+            return await fetch_search(source, query, candidates=candidates, client=session, trace=trace)
     url = search_url(source, query)
-    async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
-        for _ in range(5):
-            async with client.stream('GET', validate_url(url), headers={'User-Agent': 'DMRArchiveBot/0.1'}) as response:
-                if 'captcha' in str(response.url).lower():
-                    raise SourceUnavailable('Площадка требует CAPTCHA')
-                if response.is_redirect:
-                    url = str(response.url.join(response.headers['location']))
-                    continue
-                if response.status_code in (401, 403, 429, 498):
-                    raise SourceUnavailable(f'Площадка ограничила доступ (HTTP {response.status_code})')
-                response.raise_for_status()
-                body = bytearray()
-                async for chunk in response.aiter_bytes():
-                    body.extend(chunk)
-                    if len(body) > 5_000_000:
-                        raise SourceUnavailable('Слишком большой ответ площадки')
-                return parse_search(body.decode(response.encoding or 'utf-8', errors='replace'), source, query, filter_results=not candidates)
-    raise SourceUnavailable('Площадка перенаправляет запросы, выдача недоступна')
+    visited = set()
+    # The same client preserves ordinary cookies during redirects and across engine requests.
+    for _ in range(8):
+        url = validate_url(url)
+        if any(word in urlsplit(url).path.lower() for word in ('captcha', '/challenge', '/login', '/signin')):
+            raise SourceUnavailable('Площадка требует CAPTCHA или входа в аккаунт', 'challenge')
+        async with client.stream('GET', url, headers={'User-Agent': 'CivilianProductSearchBot/0.1'}) as response:
+            if trace is not None:
+                # Never save queries, cookies, response bodies or credentials in health evidence.
+                p = urlsplit(str(response.url))
+                trace.append({'status': response.status_code, 'host': p.hostname, 'path': p.path})
+            if response.is_redirect:
+                location = response.headers.get('location')
+                if not location:
+                    raise SourceUnavailable('Перенаправление без адреса назначения', 'redirect')
+                next_url = validate_url(str(response.url.join(location)))
+                next_path = urlsplit(next_url).path.lower()
+                if any(word in next_path for word in ('captcha', '/challenge', '/login', '/signin')):
+                    raise SourceUnavailable('Площадка требует CAPTCHA или входа в аккаунт', 'challenge')
+                values = parse_qs(urlsplit(next_url).query).get(QUERY_PARAMS[source], [])
+                if not any(value.casefold().strip() == query.casefold().strip() for value in values):
+                    raise SourceUnavailable('Сайт перенаправил на страницу без исходного поискового запроса', 'redirect')
+                # A same-URL redirect may legitimately set a cookie once; allow that once.
+                marker = (url, next_url)
+                if marker in visited:
+                    raise SourceUnavailable('Обнаружен цикл перенаправлений; автоматический поиск приостановлен', 'redirect')
+                visited.add(marker)
+                url = next_url
+                continue
+            if response.status_code in (401, 403, 429, 498):
+                raw_retry = response.headers.get('retry-after', '')
+                retry = int(raw_retry) if raw_retry.isdigit() else None
+                if raw_retry and retry is None:
+                    from email.utils import parsedate_to_datetime
+                    from datetime import datetime, timezone
+                    try:
+                        retry = max(0, int((parsedate_to_datetime(raw_retry) - datetime.now(timezone.utc)).total_seconds()))
+                    except (ValueError, TypeError, OverflowError):
+                        pass
+                raise SourceUnavailable(f'Площадка ограничила доступ (HTTP {response.status_code})',
+                                        f'http_{response.status_code}', retry)
+            response.raise_for_status()
+            body = bytearray()
+            async for chunk in response.aiter_bytes():
+                body.extend(chunk)
+                if len(body) > 5_000_000:
+                    raise SourceUnavailable('Слишком большой ответ площадки', 'layout')
+            return parse_search(body.decode(response.encoding or 'utf-8', errors='replace'), source, query, filter_results=not candidates)
+    raise SourceUnavailable('Превышен предел обычных перенаправлений', 'redirect')
 
 
-async def discover(query, sources=None):
+async def discover(query, sources=None, *, fetcher=None):
+    fetch = fetcher or fetch_search
     async def one(source):
         candidates = {}
         errors = []
@@ -175,9 +216,9 @@ async def discover(query, sources=None):
         for index, variant in enumerate(variants):
             try:
                 if len(variants) == 1:
-                    items = await fetch_search(source, variant)
+                    items = await fetch(source, variant)
                 else:
-                    items = await fetch_search(source, variant, candidates=True)
+                    items = await fetch(source, variant, candidates=True)
                 successful += 1
                 for url, item in items:
                     match = evaluate(item['title'], query)
@@ -192,7 +233,7 @@ async def discover(query, sources=None):
                 errors.append('Сетевой прокси не разрешил запрос')
             except (httpx.HTTPError, ValueError):
                 errors.append('Ошибка сети или неподдерживаемый ответ площадки')
-            if errors and not successful:
+            if errors:
                 # Do not repeat a blocked source with more query variants.
                 break
             if index + 1 < len(variants):

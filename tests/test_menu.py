@@ -111,3 +111,21 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0)
             fake.assert_awaited_once_with('LM358', ['promelec'])
         await self.text('⛔ Остановить поиск')
+
+    async def test_access_status_and_diagnostics_stay_in_source_menu(self):
+        from unittest.mock import Mock
+        from dmr_bot.discovery import SOURCES
+        engine = Mock()
+        engine.state.return_value = {'status': 'manual'}
+        engine.status_text.return_value = 'Только ручная ссылка: HTTP 403'
+        dispatcher = Dispatcher()
+        router = create_router(self.bot, 42, self.prefs, engine)
+        dispatcher.include_router(router)
+        try:
+            await dispatcher.feed_update(self.bot, Update(update_id=100, message=self.message('🏪 Площадки')))
+            args = self.bot.send_message.call_args
+            self.assertIn('Только ручная ссылка', args.args[1])
+            data = {button.callback_data for row in args.kwargs['reply_markup'].inline_keyboard for button in row}
+            self.assertEqual(data, {f'source:{key}' for key in SOURCES} | {'source:all', 'health:check'})
+        finally:
+            await router.emit_shutdown()
