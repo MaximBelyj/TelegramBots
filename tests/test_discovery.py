@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from dmr_bot.archive import Archive
-from dmr_bot.discovery import SourceUnavailable, discover, parse_search, search_url
+from dmr_bot.discovery import SOURCES, SourceUnavailable, discover, parse_search, search_url
 
 
 class DiscoveryTests(unittest.TestCase):
@@ -50,7 +50,7 @@ class DiscoveryTests(unittest.TestCase):
             return [('https://www.ozon.ru/product/radio-1/', {'title': 'DMR рация'})]
         with patch('dmr_bot.discovery.fetch_search', side_effect=fake):
             reports = asyncio.run(discover('DMR'))
-        self.assertEqual(len(reports), 4)
+        self.assertEqual(len(reports), len(SOURCES))
         self.assertEqual(reports[0]['error'], 'Blocked')
         self.assertEqual(len(reports[1]['items']), 1)
 

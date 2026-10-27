@@ -93,3 +93,21 @@ class MenuTests(unittest.IsolatedAsyncioTestCase):
         fake.assert_awaited_once_with('ozon', 'Стилус')
         self.assertEqual([r['source'] for r in reports], ['ozon'])
         self.assertIn('не сохраняются', render_report('Стилус', reports))
+
+    async def test_new_source_in_existing_menu_and_future_item(self):
+        import asyncio
+        from dmr_bot.discovery import SOURCES
+        await self.text('🏪 Площадки')
+        markup = self.bot.send_message.call_args.kwargs['reply_markup']
+        callbacks = {b.callback_data for row in markup.inline_keyboard for b in row}
+        self.assertEqual(callbacks, {f'source:{key}' for key in SOURCES} | {'source:all'})
+        await self.click('source:promelec')
+        await self.text('➕ Добавить')
+        await self.text('LM358')
+        item = next(i for i in self.prefs.items() if i['name'] == 'LM358')
+        fake = AsyncMock(return_value=[])
+        with patch('dmr_bot.bot.discover', fake):
+            await self.click(f"item:find:{item['id']}")
+            await asyncio.sleep(0)
+            fake.assert_awaited_once_with('LM358', ['promelec'])
+        await self.text('⛔ Остановить поиск')

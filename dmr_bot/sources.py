@@ -5,13 +5,16 @@ import httpx
 from bs4 import BeautifulSoup
 
 HOSTS = {'avito.ru', 'www.avito.ru', 'ozon.ru', 'www.ozon.ru',
-         'wildberries.ru', 'www.wildberries.ru', 'market.yandex.ru'}
+         'wildberries.ru', 'www.wildberries.ru', 'market.yandex.ru',
+         'chipdip.ru', 'www.chipdip.ru', 'platan.ru', 'www.platan.ru',
+         'promelec.ru', 'www.promelec.ru', 'qrz.ru', 'www.qrz.ru',
+         'radiokot.ru', 'www.radiokot.ru'}
 
 
 def validate_url(url):
     p = urlsplit(url)
     if p.scheme != 'https' or p.hostname not in HOSTS or p.username or p.password or p.port not in (None, 443):
-        raise ValueError('Нужна HTTPS-ссылка на Avito, Ozon, Wildberries или Яндекс Маркет.')
+        raise ValueError('Нужна HTTPS-ссылка на одну из подключённых площадок.')
     return urlunsplit((p.scheme, p.netloc, p.path, p.query, ''))
 
 
