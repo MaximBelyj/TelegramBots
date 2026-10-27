@@ -38,6 +38,8 @@ def render_report(query, reports):
     for report in reports:
         source = report['source']
         lines.append(SOURCES[source][0])
+        if report.get('retrieval') == 'brave_index':
+            lines.append('Источник: индекс Brave Search. Это не весь каталог; актуальные цена и наличие не проверены.')
         if report.get('warning'):
             lines.append('Часть запросов недоступна: ' + report['warning'])
         if report['error']:
