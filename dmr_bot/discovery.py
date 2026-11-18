@@ -8,6 +8,7 @@ import httpx
 from bs4 import BeautifulSoup
 from .sources import validate_url
 from .matching import evaluate, query_variants
+from .resource_catalog import NEW_ADAPTERS
 
 SOURCES = {
     'avito': ('Avito', 'https://www.avito.ru/rossiya?q={query}'),
@@ -34,6 +35,12 @@ SELECTORS = {'platan': 'a[href*="/cgi-bin/qwery.pl/id="]',
              'promelec': 'a.product-preview__title[href]',
              'qrz': '.classified_list .adv_classified .Title a[href]',
              'radiokot': 'a.topictitle[href]'}
+# Audited additions share the existing menu and ranking pipeline.
+SOURCES.update({key: (row['name'], row['search_url']) for key, row in NEW_ADAPTERS.items()})
+PATHS.update({key: row['path_pattern'] for key, row in NEW_ADAPTERS.items()})
+QUERY_PARAMS.update({key: row['query_param'] for key, row in NEW_ADAPTERS.items()})
+SELECTORS.update({key: row['selector'] for key, row in NEW_ADAPTERS.items()})
+QUERY_ENCODINGS = {key: row.get('query_encoding', 'utf-8') for key, row in NEW_ADAPTERS.items()}
 ACCESSORIES = re.compile(r'антенн|аккумулятор|батаре|чехол|кабел|зарядн|гарнитур|клипс|программатор', re.I)
 
 
@@ -45,7 +52,7 @@ class SourceUnavailable(ValueError):
 
 
 def search_url(source, query):
-    return SOURCES[source][1].format(query=quote(query, safe=''))
+    return SOURCES[source][1].format(query=quote(query, safe='', encoding=QUERY_ENCODINGS.get(source, 'utf-8')))
 
 
 def relevant(title, query):
@@ -101,6 +108,11 @@ def parse_search(html, source, query, *, filter_results=True):
     if source == 'radiokot' and any(phrase in page_text for phrase in ('подходящих сообщений не найдено', 'подходящих тем не найдено')):
         return []
     if source == 'promelec' and re.search(r'найдено:\s*0\s+товар', page_text):
+        return []
+    extra = NEW_ADAPTERS.get(source, {})
+    if extra.get('empty_text') and extra['empty_text'] in page_text:
+        return []
+    if source == 'chipster' and soup.select_one('#center .catalog-bar h2') and soup.select_one('#catalogList') is not None and not soup.select('#catalogList > li'):
         return []
     results = {}
     base = search_url(source, query)
@@ -172,6 +184,8 @@ def parse_search(html, source, query, *, filter_results=True):
             add(href, name)
     if source == 'qrz' and 'с выбранной фильтрацией ничего не найдено' in soup.get_text(' ', strip=True).lower():
         return []
+    if source == 'dessy' and not product_links and soup.select_one('#main #finderFormF input[name=search]') and soup.select_one('#MainSearch') and not soup.select('a.search[href]') and 'отображаются результаты поиска по слову' in page_text:
+        return []
     if not results and not product_links:
         # A JS shell, changed layout, or challenge must never look like a successful zero-result search.
         raise SourceUnavailable('Нет доступной выдачи: защита, JavaScript или неподдерживаемая разметка')
@@ -202,7 +216,7 @@ async def fetch_search(source, query, *, candidates=False, client=None, trace=No
                 next_path = urlsplit(next_url).path.lower()
                 if any(word in next_path for word in ('captcha', '/challenge', '/login', '/signin')):
                     raise SourceUnavailable('Площадка требует CAPTCHA или входа в аккаунт', 'challenge')
-                values = parse_qs(urlsplit(next_url).query).get(QUERY_PARAMS[source], [])
+                values = parse_qs(urlsplit(next_url).query, encoding=QUERY_ENCODINGS.get(source, 'utf-8')).get(QUERY_PARAMS[source], [])
                 if not any(value.casefold().strip() == query.casefold().strip() for value in values):
                     raise SourceUnavailable('Сайт перенаправил на страницу без исходного поискового запроса', 'redirect')
                 # A same-URL redirect may legitimately set a cookie once; allow that once.

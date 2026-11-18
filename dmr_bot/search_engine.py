@@ -9,17 +9,20 @@ import time
 import httpx
 from .discovery import SOURCES, SourceUnavailable, discover, fetch_search
 from .search_index import SearchIndex, INDEX_SOURCES
+from .resource_catalog import NEW_ADAPTERS, SearchPolicy, SearchPolicyUnavailable
 
 INTERVALS = {'market': 15, 'qrz': 15, 'platan': 10, 'promelec': 15}
 PROBE_QUERIES = {key: ('трансивер' if key == 'qrz' else 'DMR' if key in ('avito', 'ozon', 'wb', 'market') else 'LM358') for key in SOURCES}
-MANUAL_CODES = {'proxy', 'http_401', 'http_403', 'http_498', 'challenge', 'layout', 'redirect', 'index_auth', 'index_layout'}
+PROBE_QUERIES.update({'radioexpert': 'DMR'})
+MANUAL_CODES = {'proxy', 'http_401', 'http_403', 'http_498', 'challenge', 'layout', 'redirect', 'index_auth', 'index_layout', 'robots'}
 PAUSES = {'proxy': 21600, 'http_401': 21600, 'http_403': 21600, 'http_498': 21600,
-          'challenge': 21600, 'http_429': 1800, 'redirect': 3600, 'layout': 3600, 'network': 300, 'index_auth': 21600, 'index_layout': 3600, 'index_budget': 0}
+          'challenge': 21600, 'http_429': 1800, 'redirect': 3600, 'layout': 3600, 'network': 300, 'index_auth': 21600, 'index_layout': 3600, 'index_budget': 0, 'robots': 21600}
 
 
 class SearchEngine:
     def __init__(self, path, *, clock=time.time, sleeper=asyncio.sleep, client_factory=httpx.AsyncClient, index_key=None):
         self.path = Path(path)
+        self.policies = SearchPolicy(clock)
         key = os.getenv('BRAVE_SEARCH_API_KEY') if index_key is None else index_key
         self.index = SearchIndex(key, clock=clock, sleeper=sleeper, usage_path=self.path.with_name('brave_usage.json'),
                                  daily_limit=int(os.getenv('BRAVE_SEARCH_DAILY_LIMIT', '100'))) if key else None
@@ -104,8 +107,14 @@ class SearchEngine:
                 if self.index and source in INDEX_SOURCES:
                     items = await self.index.fetch(self.clients[source], source, query, trace=trace)
                 else:
+                    from .discovery import search_url
+                    await self.policies.check(source, search_url(source, query), self.clients[source])
                     items = await fetch_search(source, query, candidates=candidates,
                                                client=self.clients[source], trace=trace)
+            except SearchPolicyUnavailable as error:
+                exc = SourceUnavailable(str(error), 'robots')
+                self._failure(source, exc, trace)
+                raise exc from None
             except httpx.ProxyError:
                 exc = SourceUnavailable('Запрос отклонён сетевым прокси; это не ответ магазина', 'proxy')
                 self._failure(source, exc, trace)

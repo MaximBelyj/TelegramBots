@@ -3,6 +3,7 @@ import json
 from urllib.parse import urlsplit, urlunsplit
 import httpx
 from bs4 import BeautifulSoup
+from .resource_catalog import NEW_ADAPTERS
 
 HOSTS = {'avito.ru', 'www.avito.ru', 'ozon.ru', 'www.ozon.ru',
          'wildberries.ru', 'www.wildberries.ru', 'market.yandex.ru',
@@ -10,6 +11,7 @@ HOSTS = {'avito.ru', 'www.avito.ru', 'ozon.ru', 'www.ozon.ru',
          'promelec.ru', 'www.promelec.ru', 'qrz.ru', 'www.qrz.ru',
          'radiokot.ru', 'www.radiokot.ru'}
 
+HOSTS.update(host for row in NEW_ADAPTERS.values() for host in (row['domain'], 'www.' + row['domain']))
 
 def validate_url(url):
     p = urlsplit(url)
