@@ -1,0 +1,1975 @@
+{
+  "audit_date": "2026-11-18",
+  "scope": "36 записей существующего перечня; гражданские радиоэлектронные товары. Это оценка способов получения данных, не внедрение всех адаптеров.",
+  "status_meaning": {
+    "verified": "Для описанного варианта реально получены данные/API/файл; полный охват и внедрение не заявляются.",
+    "partial": "Часть пути подтверждена, полное перечисление/парсер ещё требует работы.",
+    "needs_access": "Требуется внешний доступ/согласование/ключ или успешная штатная загрузка.",
+    "network": "Сетевой/серверный сбой не позволяет подтвердить метод.",
+    "exclude": "Текущий ресурс не подтверждён как поставщик."
+  },
+  "counts": {
+    "needs_access": 9,
+    "verified": 9,
+    "partial": 10,
+    "network": 7,
+    "exclude": 1
+  },
+  "resources": [
+    {
+      "id": "avito",
+      "name": "Avito",
+      "domain": "avito.ru",
+      "method": "Согласованный интерфейс/экспорт; индекс как неполный резерв",
+      "problem": "Запрос из среды отклоняет прокси; ранее на Mac был 429. Сам каталог сейчас не исследован.",
+      "resolution": "Проверить разрешённый маршрут из рабочей сети; доступ к нужному API согласовать. Не считать API продавца поиском всего сайта. Индексные ссылки — только резерв.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [],
+          "error": "ProxyError"
+        },
+        "robots": {
+          "chain": [],
+          "error": "ProxyError"
+        }
+      }
+    },
+    {
+      "id": "ozon",
+      "name": "Ozon",
+      "domain": "ozon.ru",
+      "method": "Официальный поисковый индекс либо согласованная выгрузка",
+      "problem": "В среде цепочка перенаправлений; в отчёте Mac Chromium был 403. Поиск закрыт robots.",
+      "resolution": "Индексный адаптер уже подготовлен, но ключ Brave отсутствовал и живой результат не проверен. Для полного каталога нужен источник данных с соответствующими правами; Seller API не подтверждён для чужих предложений.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 307,
+              "url": "https://ozon.ru",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://ozon.ru/"
+            },
+            {
+              "status": 301,
+              "url": "https://ozon.ru/",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.ozon.ru/"
+            },
+            {
+              "status": 307,
+              "url": "https://www.ozon.ru/",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.ozon.ru/"
+            },
+            {
+              "status": 307,
+              "url": "https://www.ozon.ru/",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.ozon.ru/"
+            }
+          ],
+          "error": "redirect_limit"
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.ozon.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.ozon.ru/search/",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        }
+      }
+    },
+    {
+      "id": "wb",
+      "name": "Wildberries",
+      "domain": "wildberries.ru",
+      "method": "Индексный API либо согласованный фид",
+      "problem": "Свежий HTTP 498 на сайте/robots; в Mac Chromium тоже был 498.",
+      "resolution": "Подключить подготовленный индексный маршрут после получения ключа и проверки покрытия либо согласовать фид. Не использовать внутренние endpoint как якобы официальный открытый API.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 307,
+              "url": "https://wildberries.ru",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.wildberries.ru/"
+            },
+            {
+              "status": 498,
+              "url": "https://www.wildberries.ru/",
+              "server": "envoy",
+              "content_type": "text/html"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 498,
+              "url": "https://www.wildberries.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html"
+            }
+          ]
+        },
+        "error_excerpt": "... ID: 49bf68da5b06104d1927b9268d693af3 IP: [IP скрыт]"
+      }
+    },
+    {
+      "id": "market",
+      "name": "Яндекс Маркет",
+      "domain": "market.yandex.ru",
+      "method": "HTML публичной выдачи при доступности; индекс/фид как резерв",
+      "problem": "В свежей проверке поиск ведёт на showcaptcha; главная дала 504. Маски robots для контрольного поиска не запрещают этот URL.",
+      "resolution": "Останавливать запросы при CAPTCHA; при успешной штатной загрузке использовать HTML, при ограничении — разрешённый индекс или согласованный фид. Полного публичного API поиска не подтверждено.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 504,
+              "url": "https://market.yandex.ru",
+              "server": "envoy",
+              "content_type": null
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://market.yandex.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://market.yandex.ru/search",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "error_excerpt": "Service unavailable",
+        "search": {
+          "id": "market",
+          "kind": "search",
+          "url": "https://market.yandex.ru/search",
+          "robots_allowed": true,
+          "status": 302,
+          "redirect": "https://market.yandex.ru/showcaptcha",
+          "title": ""
+        }
+      }
+    },
+    {
+      "id": "chipdip",
+      "name": "Чип и Дип",
+      "domain": "chipdip.ru",
+      "method": "Согласованная выгрузка/API; HTML после восстановления доступа",
+      "problem": "Сейчас 403 на сайте и robots; ранее из сети Mac HTML читался.",
+      "resolution": "Проверить поддерживаемый доступ из рабочей сети; запросить у поставщика условия фида/API. Конкретный открытый API в этом исследовании не найден.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 403,
+              "url": "https://chipdip.ru",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 403,
+              "url": "https://chipdip.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "error_excerpt": "DDoS-Guard Checking your browser before accessing Please wait a few seconds. Once this check is complete, the website will open automatically"
+      }
+    },
+    {
+      "id": "platan",
+      "name": "Платан",
+      "domain": "platan.ru",
+      "method": "Официальный API JSON/XML",
+      "problem": "Старый HTML-поиск /cgi-bin/qwery_i.pl запрещён robots. Нужен другой маршрут.",
+      "resolution": "Проверен документированный https://shop.platan.ru/export/price.json?search=LM358: 200, 89 позиций, без логина/ключа. Перейти на API; соблюдать опубликованные 1000 запросов/час и 10000/сутки. Индивидуальные цены/заказы требуют отдельного доступа.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 301,
+              "url": "https://platan.ru",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.platan.ru/"
+            },
+            {
+              "status": 200,
+              "url": "https://www.platan.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=WINDOWS-1251"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.platan.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=WINDOWS-1251"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.platan.ru/cgi-bin/qwery_i.pl?code=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "api_load_pdf": {
+          "id": "platan",
+          "kind": "api_load_pdf",
+          "url": "https://www.platan.ru/api_load.pdf",
+          "robots_allowed": true,
+          "status": 200,
+          "content_type": "application/pdf",
+          "bytes": 233782,
+          "magic": "255044462d312e34"
+        },
+        "api_pdf": {
+          "id": "platan",
+          "kind": "api_pdf",
+          "url": "https://www.platan.ru/api.pdf",
+          "robots_allowed": true,
+          "status": 200,
+          "content_type": "application/pdf",
+          "bytes": 401558,
+          "magic": "255044462d312e35"
+        },
+        "official_api": {
+          "id": "platan",
+          "kind": "official_api",
+          "url": "https://www.platan.ru/company/api.html",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Подключение товарной номенклатуры по API",
+          "links": [
+            {
+              "url": "/company/docs.html",
+              "title": "скачать каталог"
+            },
+            {
+              "url": "/api.pdf",
+              "title": "ссылке здесь"
+            },
+            {
+              "url": "/company/api.html",
+              "title": "API подключение"
+            }
+          ],
+          "summary_excerpt": "Подключение товарной номенклатуры по API Головной офис продаж +7 (495) 97-000-99 info@platan.ru Оргсервис +7 (495) 744-70-70 platan@platan.ru Платан-Балтика +7 (812) 232-88-36 +7 (812) 232-52-21 baltika@platan.spb.ru Интернет-магазин +7 (495) 97-000-99 shop@platan.spb.ru shop@platan.ru О компании о нас где купить региональная сеть вакансии сертификаты Программа поставок Разработчикам новости продукции скачать каталог техподдержка статьи электронные каталоги Интернет-магазин Интернет-магазин О компании Программа поставок Доставка товара Оплата товара Как заказать товар КАТАЛОГ Электронные компоненты, радиодетали Коммутация Оптоэлектроника Индикация Светодиоды осветительные Освещение Источники питания Датчики Корпусные и установочные изделия Провода, шнуры, расходные материалы Измерительные приборы Паяльное оборудование Инструмент Промышленная автоматика Электротехническое оборудование Электроника для дома и авто о нас где купить обратная связь региональная сеть сервис-центр карьера сотрудничество о нас где купить обратная связь региональная сеть сервис-центр карьера сотрудничество Подключение товарной номенклатуры по API Предлагаем использовать API интернет магазина ПЛАТАН для поиска и получения информации о товарах и товарных группах. В рамках API реализовано: поиск товаров по наименованию продукции, группе и номенклатурному номеру (id товара), получение информации о товаре (наличие на складе, цены, описание и др.) и структуре товарных групп. Скачать документацию по подключению API можно по ссылке здесь . Полное"
+        },
+        "public_api_search": {
+          "id": "platan",
+          "kind": "public_api_search",
+          "url": "https://shop.platan.ru/export/price.json?search=LM358",
+          "credentials_used": false,
+          "api_host_robots_status": 404,
+          "status": 200,
+          "content_type": "application/json; charset=utf-8",
+          "root_type": "dict",
+          "root_keys": [
+            "items"
+          ],
+          "item_count": 89,
+          "item_fields": [
+            "PRICE_2",
+            "UPACK",
+            "QUANTY_ROZ",
+            "CENA_PACK",
+            "MINSOSKL",
+            "POSTAV",
+            "CENA_ROZ",
+            "QUANTY_PACK",
+            "QUANTY_1",
+            "PRICE_3",
+            "QUANTY_5",
+            "QUANTY_4",
+            "NAME",
+            "PRICE_1",
+            "QUANTY_2",
+            "KRATNOST",
+            "GROUP_ID",
+            "CENA_OPT",
+            "MINZAKAZ",
+            "QUANTY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "promelec",
+      "name": "Промэлектроника",
+      "domain": "promelec.ru",
+      "method": "Sitemap товарных карточек → HTML; фид по согласованию",
+      "problem": "HTML есть, но /search/ запрещён robots; в прошлом встречался 403.",
+      "resolution": "Проверен /sitemap/main.xml: 200, ссылки на Goods.xml/Goods1.xml и категории. Брать разрешённые товарные URL; полный обход и актуальность остатков ещё проверить.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 301,
+              "url": "https://promelec.ru",
+              "server": "envoy",
+              "content_type": "text/html; charset=iso-8859-1",
+              "redirect": "https://www.promelec.ru/"
+            },
+            {
+              "status": 200,
+              "url": "https://www.promelec.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.promelec.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.promelec.ru/search/?query=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "map": {
+          "id": "promelec",
+          "kind": "map",
+          "url": "https://www.promelec.ru/sitemap/main.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "",
+          "locs": [
+            "https://www.promelec.ru/sitemap/news.xml",
+            "https://www.promelec.ru/sitemap/articles.xml",
+            "https://www.promelec.ru/sitemap/category.xml",
+            "https://www.promelec.ru/sitemap/brands.xml",
+            "https://www.promelec.ru/sitemap/Goods.xml",
+            "https://www.promelec.ru/sitemap/Goods1.xml"
+          ]
+        }
+      }
+    },
+    {
+      "id": "qrz",
+      "name": "QRZ.ru",
+      "domain": "qrz.ru",
+      "method": "HTML доски объявлений с пагинацией",
+      "problem": "Нужно исключать VIP/рекламу, не смешивать куплю/продам и реальные предложения.",
+      "resolution": "Свежий /classifieds/search?q=трансивер: 200, распознано 20 кандидатов; robots разрешает. Нужны корректная пагинация и фильтрация типа объявления.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 301,
+              "url": "https://qrz.ru",
+              "server": "envoy",
+              "content_type": "text/html",
+              "redirect": "https://www.qrz.ru/"
+            },
+            {
+              "status": 200,
+              "url": "https://www.qrz.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.qrz.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.qrz.ru/classifieds/search?q=LM358",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "current_search": {
+          "id": "qrz",
+          "kind": "current_search",
+          "url": "https://www.qrz.ru/classifieds/search?q=%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%B8%D0%B2%D0%B5%D1%80",
+          "robots_allowed": true,
+          "status": 200,
+          "recognized_candidates": 20
+        }
+      }
+    },
+    {
+      "id": "radiokot",
+      "name": "RadioKot",
+      "domain": "radiokot.ru",
+      "method": "Публичный форумный HTML/допустимый браузерный сценарий",
+      "problem": "Из среды сейчас 403. В Mac ранее 200 и 60 ссылок на темы; адаптер не распознал исходную разметку.",
+      "resolution": "Исправление заголовков phpBB подготовлено, но на живой странице Mac не подтверждено. Проверить локальный отчёт; личные cookies и автоматическое решение CAPTCHA не использовать.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 302,
+              "url": "https://radiokot.ru",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8",
+              "redirect": "https://radiokot.ru/cms/auth.php"
+            },
+            {
+              "status": 302,
+              "url": "https://radiokot.ru/cms/auth.php",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8",
+              "redirect": "https://radiokot.ru/"
+            },
+            {
+              "status": 200,
+              "url": "https://radiokot.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 404,
+              "url": "https://radiokot.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "current_search": {
+          "id": "radiokot",
+          "kind": "current_search",
+          "url": "https://radiokot.ru/forum/search.php?keywords=LM358",
+          "status": 403
+        }
+      }
+    },
+    {
+      "id": "symmetron",
+      "name": "Симметрон",
+      "domain": "symmetron.ru",
+      "method": "Разрешённые категории/карточки; согласованный каталог-фид",
+      "problem": "Поиск ?q=… запрещён маской robots /*?q=*. Предыдущая оценка разрешения была ошибочной.",
+      "resolution": "Прямая контрольная карточка LM358ADR: 200, путь разрешён. Строить обход каталога/карточек с проверкой правил; полный способ перечисления ассортимента ещё разработать.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://symmetron.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://symmetron.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=UTF-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.symmetron.ru/search/?q=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "sample_card": {
+          "id": "symmetron",
+          "kind": "sample_card",
+          "url": "https://www.symmetron.ru/catalog/aktivnye-komponenty/analogovye-mikroskhemy/operatsionnye-usiliteli-i-komparatory/lm358adr-texas-instruments/",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "LM358ADR параметры, цена, наличие, документация производителя Texas Instruments | Symmetron.ru"
+        }
+      }
+    },
+    {
+      "id": "dessy",
+      "name": "DESSY",
+      "domain": "dessy.ru",
+      "method": "Официальный XLS для части ассортимента + HTML",
+      "problem": "Кириллица запроса требует Windows-1251. Прайс не покрывает весь магазин и не даёт оперативный остаток.",
+      "resolution": "/price.html содержит публичный XLS, файл 200 и прочитан: лист СМАЙЛ, 29 строк, поля кода/названия/бренда/цен/ссылки. Для остальных товаров — разрешённый HTML; период обновления согласовать.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.dessy.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=cp1251"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.dessy.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=windows-1251"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.dessy.ru/search.html?search=LM358",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "price_page": {
+          "id": "dessy",
+          "kind": "price_page",
+          "url": "https://www.dessy.ru/price.html",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Прайс-листы, каталоги",
+          "links": [
+            {
+              "url": "/price.html",
+              "title": "Прайс-листы, каталоги"
+            },
+            {
+              "url": "/include/zips/price_konstruktory.xls",
+              "title": "price_konstruktory.xls"
+            },
+            {
+              "url": "/include/zips/price_konstruktory.zip",
+              "title": "ZIP-архив"
+            },
+            {
+              "url": "/include/zips/laboratorya.zip",
+              "title": "laboratorya.zip"
+            }
+          ],
+          "summary_excerpt": "Прайс-листы, каталоги Пункт выдачи заказов Доставка Оплата Контакты Задать вопрос Мои заказы Опт Школам и ВУЗам Доставка Оплата Контакты Опт 32 года мы работаем для \nразработчиков, изготовителей\nи ремонтников электроники +7 (495) 795-50-54 +7 (916) 029-90-19 zakaz@dessy.ru Личный кабинет Корзина: Нет товаров Показать Каталог Стойки латунные, пластиковые,  из нержавеющей стали для печатных плат, винты, гайки Разъёмы питания, ВЧ и СВЧ для RC моделей, Arduino и робототехники Для Arduino: Платы, узлы, модули, шилды, наборы, конструкторы и книги Робототехника Беспроводные радиовыключатели Образовательные наборы и радиоконструкторы Инструменты и материалы Аккумуляторы, зарядки, модули BMS, блоки питания Товары для дома и ремонта бытовой техники Светодиодная техника, корпуса Радиодетали почтой Распродажа и Архив Показать Меню Образовательные наборы и конструкторы Прайс-листы, каталоги Предложение сотрудничества школам, колледжам, ВУЗам Оптовые продажи Публичная оферта Условия продажи товаров Пользовательское соглашение Политика конфиденциальности Согласие на обработку персональных данных Доставка заказов из DESSY Способы оплаты товаров через интегратор платежей PAYANYWAY Как сделать заказ на радиоконструкторы и радиодетали Курьерская доставка интернет магазина DESSY Руко.опы или горе мастера Методы оплаты Подписываясь на новости я принимаю Политику конфи-денциальности сайта www.dessy.ru Архив новостей Новости! Прайс-листы, каталоги, дополнительная информация от Интернет магазина \"DE"
+        },
+        "xls": {
+          "id": "dessy",
+          "kind": "xls",
+          "url": "https://www.dessy.ru/include/zips/price_konstruktory.xls",
+          "robots_allowed": true,
+          "status": 200,
+          "content_type": "application/vnd.ms-excel",
+          "bytes": 4695552,
+          "magic": "d0cf11e0a1b11ae1"
+        },
+        "xls_parse": {
+          "id": "dessy",
+          "kind": "xls_parse",
+          "sheets": [
+            {
+              "name": "СМАЙЛ",
+              "rows": 29,
+              "columns": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "chipster",
+      "name": "Чипстер",
+      "domain": "chipster.ru",
+      "method": "Категории → HTML карточек",
+      "problem": "robots запрещает /search*. Прежний парсер правил не распознал маску.",
+      "resolution": "Контрольная карточка /catalog/.../236.html вернула 200, путь разрешён. Перейти на категории/карточки или согласованный экспорт; полноту перечисления отдельно проверить.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://chipster.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://chipster.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://chipster.ru/search.html?q=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "sample_card": {
+          "id": "chipster",
+          "kind": "sample_card",
+          "url": "https://chipster.ru/catalog/components/active-components/chip/operational-amplifier/236.html",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "LM358P, Операционный усилитель с однополярным питанием - купить в магазине радиодеталей CHIPSTER.RU"
+        }
+      }
+    },
+    {
+      "id": "radioexpert",
+      "name": "Радиоэксперт",
+      "domain": "radioexpert.ru",
+      "method": "Каталог/карточки; XLS после согласования",
+      "problem": "Поиск ?q запрещён robots. На /pricelist/ есть XLS, но сам путь /upload/price-list.xlsx закрыт правилами.",
+      "resolution": "Прайс действительно опубликован, но не загружался из-за правил. Согласовать машинное получение файла либо использовать разрешённые карточки; прайс-выгрузку нельзя считать уже доступным автоматическим решением.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radioexpert.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radioexpert.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.radioexpert.ru/category/?q=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "price_page": {
+          "id": "radioexpert",
+          "kind": "price_page",
+          "url": "https://www.radioexpert.ru/pricelist/",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Прайслист товаров с сайта Radioexpert.ru",
+          "links": [
+            {
+              "url": "/login/?register=yes&backurl=%2Fpricelist%2F",
+              "title": "Регистрация"
+            },
+            {
+              "url": "/login/?forgot_password=yes&backurl=%2Fpricelist%2F",
+              "title": "Забыли свой пароль?"
+            },
+            {
+              "url": "/pricelist/",
+              "title": "Прайс-лист"
+            },
+            {
+              "url": "/upload/price-list.xlsx",
+              "title": "Скачать прайс-лист"
+            },
+            {
+              "url": "/pricelist/?id=755",
+              "title": "Радиостанции и трансиверы"
+            },
+            {
+              "url": "/pricelist/?id=273",
+              "title": "КВ трансиверы"
+            },
+            {
+              "url": "/pricelist/?id=255",
+              "title": "УКВ и ДМВ рации"
+            },
+            {
+              "url": "/pricelist/?id=1310",
+              "title": "Автомобильные"
+            },
+            {
+              "url": "/pricelist/?id=1311",
+              "title": "Портативные"
+            },
+            {
+              "url": "/pricelist/?id=1312",
+              "title": "Базовые и бортовые"
+            },
+            {
+              "url": "/pricelist/?id=247",
+              "title": "Радиоприемники и аксессуары"
+            },
+            {
+              "url": "/pricelist/?id=984",
+              "title": "Радиоприемники"
+            }
+          ],
+          "summary_excerpt": "Прайслист товаров с сайта Radioexpert.ru Работаем с физическим и юридическими лицами. Обработка заказов; ПН – ПТ (10:00-18:00). Электронная почта: info@radioexpert.ru Radioexpert.ru Интернет-магазин радиотоваров close +7 (812) 600-93-73 С-Петербург +7 (499) 403-12-91 Москва phone Перезвоните мне Обработка заказов ПН – ПТ (10:00-18:00) Минимальный заказ от 1 000 руб. Личный кабинет Войти Регистрация close Войти на сайт Email (логин): Пароль: Запомнить меня Забыли свой пароль? phone Корзина 0 0 shopping_cart Оформить заказ Каталог Каталог close Радиостанции и трансиверы КВ трансиверы УКВ и ДМВ рации Автомобильные Портативные Базовые и бортовые Радиоприемники и аксессуары Радиоприемники Ретрансляторы Усилители мощности Согласование и защита оборудования Антенные тюнеры Балуны Грозозащита Эквиваленты нагрузки Фильтры защиты от помех Предусилители Аудио принадлежности Тангенты (ручные микрофоны) Выносные динамики Микрофоны настольные Гарнитуры Педали PTT Наушники Аксессуары для микрофонов и гарнитур Адаптеры для микрофонов и гарнитур Звуковые карты, фильтры, синтезаторы Питание и заряд раций Аккумуляторы для раций Кейсы для батареек и аккумуляторов Зарядные устройства раций Автомобильные адаптеры питания раций Кабель питания Распределители и фильтры питания Чехлы для радиостанций Крепления радиостанций Поясные клипсы портативных раций Кронштейны автомобильных раций Крепление выносных панелей Ручки переноски Программирование и управление с ПК Кабели управления и программирования Ка"
+        },
+        "xlsx": {
+          "id": "radioexpert",
+          "kind": "xlsx",
+          "url": "https://www.radioexpert.ru/upload/price-list.xlsx",
+          "robots_allowed": false,
+          "skipped": "robots restriction"
+        }
+      }
+    },
+    {
+      "id": "rct",
+      "name": "Радиотех",
+      "domain": "rct.ru",
+      "method": "Складские/товарные HTML-карточки через каталог",
+      "problem": "/search?* запрещён robots.",
+      "resolution": "Прямая складская карточка LM358ADR вернула 200, путь разрешён. Разрабатывать обход склада/категорий либо согласовать файл остатков, без запрещённой поисковой страницы.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.rct.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.rct.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.rct.ru/search",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "sample_card": {
+          "id": "rct",
+          "kind": "sample_card",
+          "url": "https://www.rct.ru/warehouse/723/UT-00103546.html",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "LM358ADR - LM - TL Серия - Микросхемы импортные - Склад компонентов | Поставка электронных компонентов оптом и в розницу"
+        }
+      }
+    },
+    {
+      "id": "compel",
+      "name": "КОМПЭЛ",
+      "domain": "compel.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "И основной адрес, и www дают 503 с upstream connect/reset; HTML магазина не получен.",
+      "resolution": "Диагностировать маршрут/TLS у оператора среды или проверить разрешённую рабочую сеть. После восстановления изучить каталог/официальный интерфейс. Ни открытый API, ни парсер сейчас не подтверждены.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://compel.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://compel.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure",
+        "www": {
+          "url": "https://www.compel.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure"
+        }
+      }
+    },
+    {
+      "id": "terra",
+      "name": "Терраэлектроника",
+      "domain": "terraelectronica.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "Основной адрес и www: 503, upstream connection timeout. Это не доказанный антибот.",
+      "resolution": "Восстановить сетевую доступность, затем проверить официальные поиск/фиды/API. Не обещать, что Selenium исправит сетевой таймаут.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://terraelectronica.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://terraelectronica.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: connection timeout",
+        "www": {
+          "url": "https://www.terraelectronica.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: connection timeout"
+        }
+      }
+    },
+    {
+      "id": "elitan",
+      "name": "Элитан",
+      "domain": "elitan.ru",
+      "method": "Доступ из обслуживаемой сети РФ; фид/интерфейс по согласованию",
+      "problem": "Текст 403 прямо требует IP в Российской Федерации; среда определена как зарубежная.",
+      "resolution": "Проверить разрешённое использование из вашей сети РФ/подходящего рабочего хостинга либо согласовать внешний доступ с поставщиком. Не подменять географию и не считать отсутствие доступа ошибкой CSS-парсера.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 403,
+              "url": "https://elitan.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://elitan.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "error_excerpt": "Для пользования сайтом необходим ip-адрес в Российской Федерации. Ваш ip-адрес [IP скрыт] определён как иностранный и не может быть обслужен Проверить свойства вашего ip-адреса "
+      }
+    },
+    {
+      "id": "efind",
+      "name": "eFind",
+      "domain": "efind.ru",
+      "method": "Согласованный интерфейс агрегатора либо обычный браузерный сценарий",
+      "problem": "HTTP 503 содержит требование JavaScript/браузерной проверки, а не только сетевой сбой.",
+      "resolution": "Проверить штатный видимый браузер без обхода проверки; запросить условия API/обмена. Наличие пригодного открытого API пока не подтверждено.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://efind.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://efind.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "error_excerpt": "Ваш браузер не смог пройти проверку. Для доступа к веб-ресурсу включите в настройках вашего веб-браузера поддержку JavaScript или воспользуйтесь другим веб-браузером, который подде"
+      }
+    },
+    {
+      "id": "efo",
+      "name": "ЭФО",
+      "domain": "efo.ru",
+      "method": "HTML складского поиска по правильному HTTPS-адресу",
+      "problem": "Старый адрес /ru/search/stock.html понижал соединение до HTTP. Остатки обновляются раз в сутки.",
+      "resolution": "Проверен https://efo.ru/search/stock.html?q=OKW: 200 и 235 позиций; LM358 дал явный ноль. Исправить адрес и разбирать таблицу, не обещая мгновенную актуальность остатков.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://efo.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://efo.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://efo.ru/search/stock.html?q=OKW",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "https_stock": {
+          "id": "efo",
+          "kind": "https_stock",
+          "url": "https://efo.ru/search/stock.html?q=LM358",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 47786,
+          "title": "Поиск по складу",
+          "hits": []
+        },
+        "positive_stock": {
+          "id": "efo",
+          "kind": "positive_stock",
+          "url": "https://efo.ru/search/stock.html?q=OKW",
+          "method": "GET",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Поиск по складу",
+          "hits": []
+        },
+        "sitemap": {
+          "id": "efo",
+          "kind": "sitemap",
+          "url": "https://efo.ru/sitemap.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 242251,
+          "locs": [
+            "https://efo.ru/products/promishlennaya-avtomatika/efometry.html",
+            "https://efo.ru/products/promishlennaya-avtomatika/klemmi-i-soediniteli.html",
+            "https://efo.ru/products/promishlennaya-avtomatika/programmiruemie-logicheskie-kontrolleri.html",
+            "https://efo.ru/products/promishlennaya-avtomatika/klemmi-i-soediniteli/degson.html",
+            "https://efo.ru/products/promishlennaya-avtomatika/klemmi-i-soediniteli/na-pechatnuyu-platu.html",
+            "https://efo.ru/products/promishlennaya-avtomatika/promishlennie-seti-i-raspredelennaya-periferiya.html",
+            "https://efo.ru/articles/obzor-displeev-serii-uxtouch.html"
+          ]
+        }
+      }
+    },
+    {
+      "id": "voltmaster",
+      "name": "Вольтмастер",
+      "domain": "voltmaster.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "Основной адрес и www: 503, upstream connection timeout.",
+      "resolution": "Проверить сеть/доступность из другой разрешённой среды; затем подтвердить форму поиска/каталог. Фид/API не найден и не объявляется существующим.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://voltmaster.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://voltmaster.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: connection timeout",
+        "www": {
+          "url": "https://www.voltmaster.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: connection timeout"
+        }
+      }
+    },
+    {
+      "id": "elecomp",
+      "name": "Электронные Компоненты",
+      "domain": "elecomp.ru",
+      "method": "Sitemap → HTML карточек вместо закрытого поиска",
+      "problem": "Путь /search/ запрещён robots.",
+      "resolution": "sitemap.xml: 200, ссылки на 11 shop-карт; sitemap-shop-1.xml ответил 200, весь большой файл не разбирался. Сделать потоковое перечисление разрешённых URL/карточек; не повторять поиск.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://elecomp.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://elecomp.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain;charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://elecomp.ru/search/?query=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "shop_sitemap": {
+          "id": "elecomp",
+          "kind": "shop_sitemap",
+          "url": "https://elecomp.ru/sitemap-shop-1.xml",
+          "method": "GET",
+          "robots_allowed": true,
+          "status": 200
+        },
+        "sitemap": {
+          "id": "elecomp",
+          "kind": "sitemap",
+          "url": "https://elecomp.ru/sitemap.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 1849,
+          "locs": [
+            "https://elecomp.ru/sitemap-blog.xml",
+            "https://elecomp.ru/sitemap-shop-1.xml",
+            "https://elecomp.ru/sitemap-shop-2.xml",
+            "https://elecomp.ru/sitemap-shop-3.xml",
+            "https://elecomp.ru/sitemap-shop-4.xml",
+            "https://elecomp.ru/sitemap-shop-5.xml",
+            "https://elecomp.ru/sitemap-shop-6.xml"
+          ]
+        }
+      }
+    },
+    {
+      "id": "zip2002",
+      "name": "ЗИП-2002",
+      "domain": "zip-2002.ru",
+      "method": "Каталог/карточки либо согласованная выгрузка",
+      "problem": "Главная сейчас 200 вместо прежнего 403; поиск /search/ закрыт robots, sitemap ответил 403.",
+      "resolution": "Проверить разрешённый обход категорий/карточек или получить выгрузку у ЭК ЗИП. Полный рабочий маршрут ещё не доказан; один HTTP 200 главной недостаточен.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 301,
+              "url": "https://zip-2002.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8",
+              "redirect": "https://www.zip-2002.ru/"
+            },
+            {
+              "status": 200,
+              "url": "https://www.zip-2002.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.zip-2002.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.zip-2002.ru/search/?query=LM358",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "search": {
+          "id": "zip2002",
+          "kind": "search",
+          "url": "https://www.zip-2002.ru/search/?query=LM358",
+          "robots_allowed": false,
+          "skipped": "robots path restriction"
+        },
+        "sitemap": {
+          "id": "zip2002",
+          "kind": "sitemap",
+          "url": "https://www.zip-2002.ru/sitemap.xml",
+          "robots_allowed": true,
+          "status": 403,
+          "bytes": 280,
+          "title": "403 Forbidden",
+          "hits": []
+        }
+      }
+    },
+    {
+      "id": "radiodetali",
+      "name": "Сеть электронных компонентов",
+      "domain": "radiodetali.com",
+      "method": "Публичный SSR HTML каталога",
+      "problem": "Интерфейс Nuxt содержит внутренний /api, но документация публичного API не подтверждена.",
+      "resolution": "Подтверждён опубликованный SearchAction: /catalog?q=LM358, 200 и товарные ссылки /product/. Брать HTML/JSON-LD, не выдавая внутренние запросы приложения за официальный API; пагинацию ещё проверить.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radiodetali.com/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radiodetali.com/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://radiodetali.com/catalog?q=LM358",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "prices": {
+          "id": "radiodetali",
+          "kind": "prices",
+          "url": "https://radiodetali.com/prices",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 73924,
+          "title": "Цены и оформление заказа — Сеть электронных компонентов",
+          "hits": []
+        },
+        "search": {
+          "id": "radiodetali",
+          "kind": "search",
+          "url": "https://radiodetali.com/catalog?q=LM358",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 279166,
+          "title": "Поиск: LM358 — Сеть электронных компонентов",
+          "hits": [
+            {
+              "url": "/product/lm358-jsmsemi-151073",
+              "title": "Микросхема LM358"
+            },
+            {
+              "url": "/product/lm358-hottech-151595",
+              "title": "Микросхема LM358"
+            },
+            {
+              "url": "/product/lm358-jsmicro-162486",
+              "title": "Микросхема LM358"
+            },
+            {
+              "url": "/product/lm358dt-st-microelectronics-93858",
+              "title": "Микросхема LM358DT"
+            },
+            {
+              "url": "/product/lm358p-texas-instruments-101288",
+              "title": "Микросхема LM358P"
+            },
+            {
+              "url": "/product/lm358d-idchip-145126",
+              "title": "Микросхема LM358D"
+            },
+            {
+              "url": "/product/lm358m-fulihao-tech-145944",
+              "title": "Микросхема LM358M"
+            },
+            {
+              "url": "/product/lm358n-hgsemi-146792",
+              "title": "Микросхема LM358N"
+            }
+          ]
+        },
+        "sitemap": {
+          "id": "radiodetali",
+          "kind": "sitemap",
+          "url": "https://radiodetali.com/sitemap_index.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 1592,
+          "locs": [
+            "https://radiodetali.com/__sitemap__/0.xml",
+            "https://radiodetali.com/__sitemap__/1.xml",
+            "https://radiodetali.com/__sitemap__/2.xml",
+            "https://radiodetali.com/__sitemap__/3.xml",
+            "https://radiodetali.com/__sitemap__/4.xml",
+            "https://radiodetali.com/__sitemap__/5.xml",
+            "https://radiodetali.com/__sitemap__/6.xml"
+          ]
+        }
+      }
+    },
+    {
+      "id": "radioshop",
+      "name": "Radio Shop",
+      "domain": "radio-shop.ru",
+      "method": "HTML поиска + sitemap, сохранение product_id",
+      "problem": "В выдаче смешаны SEO-ссылки и index.php?route=product/product&product_id=…; есть категории и аксессуары.",
+      "resolution": "/search/?search=DMR вернул 200 и товарные предложения; sitemap-new.xml также 200. Парсер должен сохранять product_id, отсекать категории и корректно читать противоречивые метки наличия.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radio-shop.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radio-shop.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://radio-shop.ru/search/?search=DMR",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "search": {
+          "id": "radioshop",
+          "kind": "search",
+          "url": "https://radio-shop.ru/search/?search=DMR",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 170681,
+          "title": "Поиск - DMR",
+          "hits": [
+            {
+              "url": "https://radio-shop.ru/racii/dmr%20tier%20ii/",
+              "title": "Портативные рации DMR TIER II"
+            },
+            {
+              "url": "https://radio-shop.ru/index.php?route=product%2Fcategory",
+              "title": "DMR системы и радиостанции"
+            },
+            {
+              "url": "https://radio-shop.ru/aksessuary-dlya-racij/dmr-portativnyj-kabel-telemetrii-dlya-dp3000-4000-pmkn4040/",
+              "title": "MotoTRBO DMR Портативный кабель телеметрии для DP3000/4000 PMKN4040 (PMKN4040)"
+            },
+            {
+              "url": "https://radio-shop.ru/index.php?route=product%2Fproduct&product_id=14007",
+              "title": "DMR радиостанция Kirisun DP405 UHF"
+            },
+            {
+              "url": "https://radio-shop.ru/index.php?route=product%2Fproduct&product_id=14008",
+              "title": "DMR радиостанция Kirisun DP405 VHF"
+            },
+            {
+              "url": "https://radio-shop.ru/racii/professionalnye-racii/dp680_kirisun/",
+              "title": "DMR радиостанция цифровая портативная DP680 Kirisun"
+            },
+            {
+              "url": "https://radio-shop.ru/index.php?route=product%2Fproduct&product_id=14009",
+              "title": "DMR радиостанция цифровая портативная Kirisun DP480 UHF"
+            },
+            {
+              "url": "https://radio-shop.ru/index.php?route=product%2Fproduct&product_id=14011",
+              "title": "DMR радиостанция цифровая портативная Kirisun DP480 UHF GPS/GLONASS"
+            }
+          ]
+        },
+        "sitemap": {
+          "id": "radioshop",
+          "kind": "sitemap",
+          "url": "https://www.radio-shop.ru/sitemap-new.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 469822,
+          "locs": [
+            "https://www.radio-shop.ru/",
+            "https://www.radio-shop.ru/login/",
+            "https://www.radio-shop.ru/contact-us/",
+            "https://www.radio-shop.ru/create-account/",
+            "https://www.radio-shop.ru/compare-products/",
+            "https://www.radio-shop.ru/delivery/",
+            "https://www.radio-shop.ru/opt/"
+          ]
+        }
+      }
+    },
+    {
+      "id": "radiomag",
+      "name": "Радиомаг",
+      "domain": "radiomag.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "Основной адрес и www: 503 с upstream remote connection failure.",
+      "resolution": "Проверить достижимость и действующего владельца/магазин из рабочей сети; затем выбирать HTML/фид. Не считать этот домен подтверждённым поставщиком только по названию.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://radiomag.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://radiomag.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure",
+        "www": {
+          "url": "https://www.radiomag.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure"
+        }
+      }
+    },
+    {
+      "id": "chipfind",
+      "name": "ChipFind",
+      "domain": "chipfind.ru",
+      "method": "HTML таблицы предложений поставщиков",
+      "problem": "На странице одновременно datasheet, аналоги, новости и предложения; обычный сбор ссылок теряет товары.",
+      "resolution": "/search/?part=LM358 вернул 200 и таблицу Поставщик–Наименование–Производитель–Цена–Склад. Парсить группы/строки поставщиков, а не PDF/рекламу; различать условия цены и актуальность.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.chipfind.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.chipfind.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://www.chipfind.ru/search/?part=LM358",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "search": {
+          "id": "chipfind",
+          "kind": "search",
+          "url": "https://www.chipfind.ru/search/?part=LM358",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 498119,
+          "title": "LM358 | Электронный компонент | ChipFind.ru",
+          "hits": [
+            {
+              "url": "/datasheet/philips/lm358.htm",
+              "title": "LM358"
+            },
+            {
+              "url": "/datasheet/utc/lm358.htm",
+              "title": "LM358"
+            },
+            {
+              "url": "/datasheet/ti/lm358.htm",
+              "title": "LM358"
+            },
+            {
+              "url": "/info/suppliers.htm",
+              "title": "Разместить прайс-лист"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "getchip",
+      "name": "GetChip",
+      "domain": "getchip.ru",
+      "method": "Исключить из текущего перечня поставщиков",
+      "problem": "Сейчас это панель Текущая температура / OwenCloud, без каталога/продаж.",
+      "resolution": "Исправить прежнюю классификацию: ресурс не подтверждён как магазин радиоэлектроники. Не разрабатывать для него товарный парсер без нового доказательства ассортимента.",
+      "status": "exclude",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://getchip.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 404,
+              "url": "https://getchip.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "amperka",
+      "name": "Амперка",
+      "domain": "amperka.ru",
+      "method": "Sitemap → HTML карточек",
+      "problem": "/search запрещён robots; не нужно обходить этот запрет.",
+      "resolution": "sitemap.xml: 200, найдено 1305 /product/ URL; контрольная Arduino Uno карточка 200 и путь разрешён. Можно строить ограниченный обход карточек/категорий, с фильтрацией книг и аксессуаров.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://amperka.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://amperka.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://amperka.ru/search?q=Arduino",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "product_card": {
+          "id": "amperka",
+          "kind": "product_card",
+          "url": "https://amperka.ru/product/arduino-uno",
+          "method": "GET",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Arduino Uno R3 / Купить с доставкой по России / Амперка",
+          "hits": [
+            {
+              "url": "/collection/arduino",
+              "title": "Arduino"
+            },
+            {
+              "url": "/page/arduino-ide",
+              "title": "Arduino IDE"
+            },
+            {
+              "url": "/product/structor-arduino",
+              "title": "Крепления Arduino и Iskra (#Структор)"
+            },
+            {
+              "url": "/product/arduino-box",
+              "title": "Бокс для Arduino"
+            },
+            {
+              "url": "/product/arduino-uno-wifi-rev-2",
+              "title": "Arduino Uno Wi-Fi Rev2"
+            },
+            {
+              "url": "/product/arduino-mega-2560",
+              "title": "Arduino Mega 2560 R3"
+            }
+          ]
+        },
+        "sitemap": {
+          "id": "amperka",
+          "kind": "sitemap",
+          "url": "https://amperka.ru/sitemap.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 253228,
+          "locs": [
+            "https://amperka.ru/page/development-board-guide",
+            "https://amperka.ru/page/xod-ide",
+            "https://amperka.ru/page/form",
+            "https://amperka.ru/page/what-is-troyka-system",
+            "https://amperka.ru/page/distributors",
+            "https://amperka.ru/",
+            "https://amperka.ru/page/teacher"
+          ]
+        }
+      }
+    },
+    {
+      "id": "roboparts",
+      "name": "RoboParts",
+      "domain": "roboparts.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "Основной адрес и www: 503 с upstream remote connection failure.",
+      "resolution": "Восстановить соединение/подтвердить действующий ресурс; запросить публичную выгрузку, если поставщик её предоставляет. Никакой готовый API сейчас не найден.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://roboparts.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://roboparts.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure",
+        "www": {
+          "url": "https://www.roboparts.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure"
+        }
+      }
+    },
+    {
+      "id": "roboshop",
+      "name": "RoboShop",
+      "domain": "roboshop.spb.ru",
+      "method": "Разрешённые категории/карточки или фид по согласованию",
+      "problem": "Публичный JS подтверждает маршрут product/search, но robots его запрещает. Указанный HTTP sitemap в HTTPS-проверке дал 404.",
+      "resolution": "Не использовать закрытый поиск и не понижать TLS. Проверить категории/карточки или запросить исправленный HTTPS sitemap/выгрузку. Полный маршрут пока не подтверждён.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://roboshop.spb.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://roboshop.spb.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://roboshop.spb.ru/index.php?route=product%2Fsearch&search=Arduino",
+          "allowed": false,
+          "parser": "Protego 0.7.0"
+        },
+        "common_js": {
+          "id": "roboshop",
+          "kind": "common_js",
+          "url": "https://roboshop.spb.ru/catalog/view/javascript/common.js",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 13598,
+          "search_code": "').parent().find('button').on('click', function() {\n\t\tvar url = $('base').attr('href') + 'index.php?route=product/search';\n\n\t\tvar value = $('#search input[name=\\'search\\']').val();\n\n\t\tif (value) {\n\t\t\turl += '&search=' + encodeURIComponent(value);\n\t\t}\n\n\t\tlocation = url;\n\t});\n\n\t$('#search input[name=\\'search\\']').on('keydown', function(e) {\n\t\tif (e.keyCode == 13) {\n\t\t\t$('#search input[name=\\'search\\"
+        },
+        "https_sitemap": {
+          "id": "roboshop",
+          "kind": "https_sitemap",
+          "url": "https://roboshop.spb.ru/index.php?route=feed%2Fgoogle_sitemap",
+          "robots_allowed": true,
+          "status": 404,
+          "locs": [],
+          "bytes": 19610
+        },
+        "search": {
+          "id": "roboshop",
+          "kind": "search",
+          "url": "https://roboshop.spb.ru/index.php?route=product%2Fsearch&search=Arduino",
+          "method": "GET",
+          "robots_allowed": false,
+          "skipped": "robots restriction"
+        }
+      }
+    },
+    {
+      "id": "radiosila",
+      "name": "Радиосила",
+      "domain": "radiosila.ru",
+      "method": "HTML поиска через штатную POST-форму/303",
+      "problem": "Старый интерфейс Joomla/VirtueMart, в выдаче есть статьи и аксессуары вместе с товарами.",
+      "resolution": "Проверены поля searchword/task/option, POST → 303 → /component/search/?searchword=DMR → 200, товары и 3 страницы выдачи. Нужен фильтр товарных результатов и пагинация.",
+      "status": "verified",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radiosila.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://radiosila.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain;charset=UTF-8"
+            }
+          ]
+        },
+        "search_policy": {
+          "url": "https://radiosila.ru/component/search/?searchword=DMR",
+          "allowed": true,
+          "parser": "Protego 0.7.0"
+        },
+        "post_search": {
+          "id": "radiosila",
+          "kind": "post_search",
+          "url": "https://radiosila.ru/index.php",
+          "method": "POST",
+          "robots_allowed": true,
+          "status": 303,
+          "redirect": "https://radiosila.ru/component/search/?searchword=DMR&searchphrase=all",
+          "title": "",
+          "hits": []
+        },
+        "search_results": {
+          "id": "radiosila",
+          "kind": "search_results",
+          "url": "https://radiosila.ru/component/search/?searchword=DMR&searchphrase=all",
+          "robots_allowed": true,
+          "status": 200,
+          "title": "Поиск - купить на radiosila.ru",
+          "links": [
+            {
+              "url": "https://api.whatsapp.com/send",
+              "title": ""
+            },
+            {
+              "url": "https://api.whatsapp.com/send",
+              "title": ""
+            }
+          ],
+          "summary_excerpt": ""
+        }
+      }
+    },
+    {
+      "id": "cqham",
+      "name": "CQHAM",
+      "domain": "cqham.ru",
+      "method": "Исследовать именно торговую доску/раздел форума",
+      "problem": "12-секундные запросы не отвечали; одна проверка с 30 сек получила главную 200, следующая снова завершилась таймаутом. Структура торгового раздела ещё не подтверждена.",
+      "resolution": "Учитывать медленный ответ, найти и проверить публичный торговый раздел/поиск и его правила. Главная технического портала сама по себе не источник товарной выдачи.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [],
+          "error": "ReadTimeout"
+        },
+        "robots": {
+          "chain": [],
+          "error": "ReadTimeout"
+        },
+        "long_timeout_check": {
+          "id": "cqham",
+          "kind": "long_timeout_check",
+          "url": "https://www.cqham.ru/",
+          "timeout_seconds": 30,
+          "status": 200,
+          "title": "CQHAM.RU Технический портал радиолюбителей России"
+        },
+        "trading_discovery": {
+          "id": "cqham",
+          "kind": "trading_discovery",
+          "url": "https://www.cqham.ru/",
+          "error": "ReadTimeout"
+        },
+        "www": {
+          "url": "https://www.cqham.ru/",
+          "error": "ReadTimeout"
+        }
+      }
+    },
+    {
+      "id": "siriust",
+      "name": "Сириус",
+      "domain": "siriust.ru",
+      "method": "Согласованный фид/доступ; допустимый браузерный сценарий после проверки",
+      "problem": "503 с заголовком Проверка безопасности; это отличается от обычного upstream timeout.",
+      "resolution": "Проверить штатную браузерную загрузку/предлагаемые интерфейсы; при проверке доступа остановиться и согласовать получение каталога. Успешный обход не заявляется.",
+      "status": "needs_access",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://siriust.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://siriust.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/html; charset=utf-8"
+            }
+          ]
+        },
+        "error_excerpt": "Проверка безопасности...",
+        "www": {
+          "url": "https://www.siriust.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "Проверка безопасности...",
+          "excerpt": "Проверка безопасности..."
+        }
+      }
+    },
+    {
+      "id": "tangenta",
+      "name": "Тангента",
+      "domain": "tangenta.ru",
+      "method": "Метод не установлен до восстановления сети",
+      "problem": "Основной адрес и www: 503 с upstream remote connection failure.",
+      "resolution": "Проверить соединение/работоспособность в другой разрешённой сети; затем подтвердить ассортимент и способ поиска. API/выгрузка пока не найдены.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://tangenta.ru/",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 503,
+              "url": "https://tangenta.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain"
+            }
+          ]
+        },
+        "error_excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure",
+        "www": {
+          "url": "https://www.tangenta.ru/",
+          "status": 503,
+          "server": "envoy",
+          "title": "",
+          "excerpt": "upstream connect error or disconnect/reset before headers. reset reason: remote connection failure"
+        }
+      }
+    },
+    {
+      "id": "chipexpert",
+      "name": "ЧипЭксперт",
+      "domain": "chipexpert.ru",
+      "method": "Метод не установлен до восстановления сайта",
+      "problem": "Короткие запросы — таймаут; проверка 30 сек дала 522 Connection timed out.",
+      "resolution": "Сначала проверить восстановление связи сайта с его сервером/доступ в рабочей сети; после этого исследовать интерфейс. Изменение CSS-селекторов не исправит 522.",
+      "status": "network",
+      "evidence": {
+        "homepage": {
+          "chain": [],
+          "error": "ReadTimeout"
+        },
+        "robots": {
+          "chain": [],
+          "error": "ReadTimeout"
+        },
+        "long_timeout_check": {
+          "id": "chipexpert",
+          "kind": "long_timeout_check",
+          "url": "https://www.chipexpert.ru/",
+          "timeout_seconds": 30,
+          "status": 522,
+          "title": "chipexpert.ru | 522: Connection timed out"
+        },
+        "www": {
+          "url": "https://www.chipexpert.ru/",
+          "error": "ReadTimeout"
+        }
+      }
+    },
+    {
+      "id": "ruselt",
+      "name": "РУСЭЛТ",
+      "domain": "ruselt.ru",
+      "method": "Sitemap категорий/карточек → HTML",
+      "problem": "Параметр q в /catalog/ не доказал фильтрацию; нельзя выдавать весь каталог за результат поиска.",
+      "resolution": "sitemap.xml вернул 200 и тысячи адресов, включая карточки; их пути разрешены. Строить поиск по данным разрешённых карточек, проверить пагинацию/полноту; это преимущественно электропитание.",
+      "status": "partial",
+      "evidence": {
+        "homepage": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.ruselt.ru/",
+              "server": "envoy",
+              "content_type": "text/html; charset=UTF-8"
+            }
+          ]
+        },
+        "robots": {
+          "chain": [
+            {
+              "status": 200,
+              "url": "https://www.ruselt.ru/robots.txt",
+              "server": "envoy",
+              "content_type": "text/plain; charset=utf-8"
+            }
+          ]
+        },
+        "sitemap": {
+          "id": "ruselt",
+          "kind": "sitemap",
+          "url": "https://www.ruselt.ru/sitemap.xml",
+          "robots_allowed": true,
+          "status": 200,
+          "bytes": 729545,
+          "locs": [
+            "https://www.ruselt.ru/",
+            "https://www.ruselt.ru/photo-gallery/",
+            "https://www.ruselt.ru/catalog/asinhronnye-elektrodvigateli/elektrodvigateli_vaso/",
+            "https://www.ruselt.ru/catalog/ibp/dlya-gazovyh-kotlov/2514/",
+            "https://www.ruselt.ru/catalog/ustroystva_kompensacii_reaktivnoy_moschn/",
+            "https://www.ruselt.ru/catalog/chastotnyj_preobrazovatel/",
+            "https://www.ruselt.ru/catalog/stabilizator_napryazheniya/spn-m-40kva-4t/"
+          ]
+        }
+      }
+    }
+  ]
+}
