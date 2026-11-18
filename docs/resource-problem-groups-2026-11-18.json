@@ -1,0 +1,374 @@
+{
+  "date": "2026-11-18",
+  "version": "audit-groups-v1",
+  "basis": "docs/resource-feasibility-2026-11-18.json",
+  "counts": {
+    "bot_search_verified": 2,
+    "route_verified_needs_integration": 6,
+    "problem_resources": 27,
+    "problem_groups": 11,
+    "exclude": 1,
+    "total": 36
+  },
+  "vpn_finding": "Только Элитан прямо сообщает ограничение страны IP. Для остальных VPN как причина не доказан.",
+  "holdouts": [
+    {
+      "id": "qrz",
+      "level": "bot_search",
+      "method": "HTML поиска объявлений",
+      "evidence": "Распознано 20 кандидатов; адаптер в боте.",
+      "next": "Оставить, новых способов доступа не искать."
+    },
+    {
+      "id": "dessy",
+      "level": "bot_search",
+      "method": "HTML; XLS как дополнительный источник части ассортимента",
+      "evidence": "HTML и кодировка проверены; файл XLS прочитан.",
+      "next": "Оставить. Прайс не считать полным ассортиментом."
+    },
+    {
+      "id": "platan",
+      "level": "verified_route",
+      "method": "Официальный JSON/XML API",
+      "evidence": "Публичный API вернул 89 позиций без логина/ключа.",
+      "next": "Подключить найденный API вместо старого HTML-поиска; альтернативу не исследовать."
+    },
+    {
+      "id": "efo",
+      "level": "verified_route",
+      "method": "HTML складского поиска по правильному HTTPS-адресу",
+      "evidence": "OKW — 235 позиций; LM358 — явный ноль.",
+      "next": "Подключить найденный адрес без /ru/; новых решений доступа не искать."
+    },
+    {
+      "id": "radiodetali",
+      "level": "verified_route",
+      "method": "SSR HTML /catalog?q=…",
+      "evidence": "Получены товарные ссылки по LM358.",
+      "next": "Реализовать адаптер к подтверждённому HTML."
+    },
+    {
+      "id": "radioshop",
+      "level": "verified_route",
+      "method": "HTML поиска, сохранение product_id",
+      "evidence": "Получены товарные предложения DMR и sitemap.",
+      "next": "Подключить маршрут, сохранить идентификаторы товара в query-параметрах."
+    },
+    {
+      "id": "chipfind",
+      "level": "verified_route",
+      "method": "HTML таблицы поставщиков",
+      "evidence": "Есть поставщики, позиции, цены и склад.",
+      "next": "Подключить разбор предложений отдельно от datasheet и рекламы."
+    },
+    {
+      "id": "radiosila",
+      "level": "verified_route",
+      "method": "POST → 303 → HTML поисковой выдачи",
+      "evidence": "Получена выдача DMR с товарами и пагинацией.",
+      "next": "Подключить подтверждённый сценарий, отсеять статьи и аксессуары."
+    }
+  ],
+  "problem_groups": [
+    {
+      "id": "foreign_ip",
+      "title": "Региональное ограничение по IP",
+      "sites": [
+        "elitan"
+      ],
+      "problem": "Текст 403 прямо требует IP в РФ. Это подтверждённая география, а не доказательство запрета любого VPN.",
+      "solution": "Использовать обслуживаемую сайтом разрешённую сеть РФ или согласовать внешний доступ/выгрузку с поставщиком. Для VPN важна страна выходного IP; российский адрес сам по себе не гарантирует доступ.",
+      "confirmed": "Причина ограничения подтверждена текстом сайта. Российская рабочая среда/согласованный фид здесь не проверены.",
+      "prerequisite": "Разрешённая рабочая сеть или согласие поставщика."
+    },
+    {
+      "id": "upstream",
+      "title": "503: промежуточная сеть не соединяется с сайтом",
+      "sites": [
+        "compel",
+        "terra",
+        "voltmaster",
+        "radiomag",
+        "roboparts"
+      ],
+      "problem": "503 upstream connect/reset/timeout на основном адресе и www. В новой проверке локальный DNS выдаёт IPv4-адреса для всех пяти доменов.",
+      "solution": "Диагностировать соединение прокси с целевым сервером и TLS/маршрут у оператора среды; сравнить с разрешённой рабочей сетью. Парсер и JavaScript не исправляют отсутствие ответа сервера.",
+      "confirmed": "DNS-результат сужает проблему, но прокси может использовать другой резолвер. Прямой HTTP-доступ не восстановлен.",
+      "prerequisite": "Работоспособный сетевой маршрут; затем повторная проверка каталога."
+    },
+    {
+      "id": "canonical_dns",
+      "title": "Различаются основной адрес и www",
+      "sites": [
+        "tangenta"
+      ],
+      "problem": "Локальный резолвер не нашёл tangenta.ru, но разрешил www.tangenta.ru. HTTP через прокси ранее дал 503 и для www.",
+      "solution": "Дальнейшие проверки вести по каноническому www; отдельно восстановить сетевое соединение. Не объявлять сайт несуществующим и не подменять DNS прямым IP для обхода контроля.",
+      "confirmed": "Разница DNS подтверждена; выбор www пока не восстановил HTTP-доступ.",
+      "prerequisite": "Проверка правильного домена и маршрута с оператором/поставщиком."
+    },
+    {
+      "id": "slow",
+      "title": "Нестабильная медленная загрузка",
+      "sites": [
+        "cqham"
+      ],
+      "problem": "Короткие таймауты; одна 30-секундная проверка главной дала 200, следующая снова не завершилась. Торговый раздел не проверен.",
+      "solution": "Использовать правильный адрес www и ограниченный увеличенный таймаут, без частых повторов; после стабильной загрузки проверить именно торговую доску и её правила.",
+      "confirmed": "Увеличение таймаута один раз помогло, устойчивость и товарная выдача не доказаны.",
+      "prerequisite": "Стабильный ответ и адрес торгового раздела."
+    },
+    {
+      "id": "origin_522",
+      "title": "522: сервер сайта не отвечает",
+      "sites": [
+        "chipexpert"
+      ],
+      "problem": "После таймаутов получена страница 522 Connection timed out. Локальный DNS домен разрешает.",
+      "solution": "Дождаться восстановления соединения инфраструктуры сайта с его сервером либо уточнить состояние у поставщика. Повторная проверка редкая, без маскировки клиента.",
+      "confirmed": "Отказ подтверждён; исправления со стороны бота пока нет.",
+      "prerequisite": "Восстановление доступности сайта."
+    },
+    {
+      "id": "browser_check",
+      "title": "503 со страницей браузерной проверки",
+      "sites": [
+        "efind",
+        "siriust"
+      ],
+      "problem": "У eFind текст требует JavaScript; у Сириуса заголовок Проверка безопасности. Это не та же причина, что у upstream-503.",
+      "solution": "Проверить обычный видимый браузерный сценарий, без обхода CAPTCHA; если доступ не предоставляется — согласовать API/выгрузку. Нельзя назвать Selenium гарантированным исправлением.",
+      "confirmed": "Тип страницы проверки подтверждён. Успешный браузерный сбор и пригодный открытый API не подтверждены.",
+      "prerequisite": "Успешная допустимая загрузка или согласованный источник данных."
+    },
+    {
+      "id": "http_denial",
+      "title": "Отказ HTTP 403/498",
+      "sites": [
+        "ozon",
+        "wb",
+        "chipdip",
+        "radiokot"
+      ],
+      "problem": "Ozon/RadioKot/Чип и Дип — 403 в части проверок; Wildberries — 498. Эти коды не доказывают VPN. Ozon/WB отказали и в диагностическом Chromium на Mac; ChipDip ранее на Mac работал.",
+      "solution": "Для Ozon/WB подготовлен официальный индексный маршрут, нужен ключ и проверка покрытия; для полного каталога — согласованный источник. ChipDip проверять в подтверждённой рабочей сети. RadioKot требует также проверки исправленного разбора реального HTML на Mac.",
+      "confirmed": "Прямые ограничения сохраняются. Индекс не равен полному каталогу и его живое подключение не проверено; варианты для остальных требуют дополнительного доступа/проверки.",
+      "prerequisite": "Ключ индексного API либо согласованный доступ; локальное подтверждение для RadioKot/ChipDip."
+    },
+    {
+      "id": "captcha",
+      "title": "Перенаправление на CAPTCHA",
+      "sites": [
+        "market"
+      ],
+      "problem": "Контрольный поисковый запрос вернул 302 на showcaptcha, а не товарную выдачу.",
+      "solution": "Остановить автоматические повторы; использовать штатный доступ при его восстановлении, согласованный фид или индекс с обозначением неполного охвата.",
+      "confirmed": "CAPTCHA обнаружена, автоматическое прохождение не реализовано и не заявляется.",
+      "prerequisite": "Поддерживаемый доступ к данным."
+    },
+    {
+      "id": "proxy_rate_limit",
+      "title": "Отказ прокси и отдельное ограничение частоты",
+      "sites": [
+        "avito"
+      ],
+      "problem": "В облаке — ProxyError; в прежней локальной проверке — HTTP 429. Это два разных уровня отказа.",
+      "solution": "Сначала восстановить разрешённый сетевой маршрут, затем соблюдать Retry-After/паузы. Для устойчивого каталожного доступа согласовать интерфейс/экспорт; доступ к нужному общему поиску API пока не подтверждён.",
+      "confirmed": "Паузы и обработка Retry-After есть, но они не восстанавливают прокси-маршрут и не снимают ограничение автоматически.",
+      "prerequisite": "Рабочий маршрут плюс доступ/квота сайта."
+    },
+    {
+      "id": "restricted_search",
+      "title": "Поисковый путь закрыт robots.txt, каталог/карточки доступны",
+      "sites": [
+        "promelec",
+        "symmetron",
+        "chipster",
+        "radioexpert",
+        "rct",
+        "elecomp",
+        "zip2002",
+        "roboshop",
+        "amperka"
+      ],
+      "problem": "Маски закрывают именно поисковые URL. Наличие адаптера и HTTP 200 не означает разрешённый действующий поисковый маршрут.",
+      "solution": "Общий модуль перечисления разрешённых URL по sitemap/категориям → HTML карточек → поиск по полученным данным. Либо согласованный фид. Нужен разбор robots с масками, ограничения обхода, пагинация/дедупликация; товарные результаты постоянно не архивировать.",
+      "confirmed": "Для Промэлектроники новая проверка Goods.xml дала 200 и разрешённые /product/ URL; для Амперки, Симметрона, Чипстера, Радиотеха карточки подтверждены прошлым аудитом. Elecomp: первая выборка дала категории, вторая карта дала товарные URL с разрешёнными путями; карточки этой новой выборки не загружались. У RadioExpert прайс-ссылка есть, но файл закрыт. У ZIP и RoboShop полного перечисления ещё нет.",
+      "prerequisite": "Реализовать и проверить новый общий маршрут; для ZIP/RoboShop или закрытого прайса может потребоваться экспорт поставщика."
+    },
+    {
+      "id": "no_filter",
+      "title": "Каталог есть, поисковая фильтрация не подтверждена",
+      "sites": [
+        "ruselt"
+      ],
+      "problem": "Параметр q не доказал, что сайт фильтрует товары; нельзя считать весь каталог результатом запроса.",
+      "solution": "Использовать тот же модуль sitemap/карточек и локального сопоставления, что для группы закрытого поиска. Не выдавать категории за товары.",
+      "confirmed": "Sitemap с карточками подтверждён, готовый поиск по полному каталогу ещё не реализован.",
+      "prerequisite": "Проверить полноту каталога и построить сопоставление товаров."
+    }
+  ],
+  "excluded": [
+    {
+      "id": "getchip",
+      "reason": "Сейчас панель температуры OwenCloud, не подтверждён магазин; исключить из рекомендованных источников."
+    }
+  ],
+  "new_evidence": {
+    "elecomp-product-alternative.json": {
+      "id": "elecomp",
+      "url": "https://elecomp.ru/sitemap-shop-2.xml",
+      "purpose": "distinguish product links from category-only sitemap sample",
+      "robots_allowed": true,
+      "status": 200,
+      "sample_urls": [
+        "https://elecomp.ru/shnur-optichyeskiy-toslink-2-toslink-1m-2m-shyelk/",
+        "https://elecomp.ru/shnur-aud-3-5-aud-3-5-styeryeo-1m-vitoy-gold-myetall-aux-rexant-18-4014/",
+        "https://elecomp.ru/shnur-aud-3-5-styeryeo-aud-6-3-2-mono-1-5m-gold-plastik-dayton-premier-3-0305-5-147/"
+      ],
+      "sample_bytes": 108028,
+      "sample_allowed": [
+        true,
+        true,
+        true
+      ]
+    },
+    "alternative-policies.json": [
+      {
+        "id": "amperka",
+        "candidate_url": "https://amperka.ru/product/arduino-uno",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "symmetron",
+        "candidate_url": "https://www.symmetron.ru/catalog/aktivnye-komponenty/analogovye-mikroskhemy/operatsionnye-usiliteli-i-komparatory/lm358adr-texas-instruments/",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "chipster",
+        "candidate_url": "https://chipster.ru/catalog/components/active-components/chip/operational-amplifier/236.html",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "rct",
+        "candidate_url": "https://www.rct.ru/warehouse/723/UT-00103546.html",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "radioexpert",
+        "candidate_url": "https://www.radioexpert.ru/product/yaesu-ft-710/",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "zip2002",
+        "candidate_url": "https://www.zip-2002.ru/catalog/",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      },
+      {
+        "id": "roboshop",
+        "candidate_url": "https://roboshop.spb.ru/",
+        "allowed_by_policy": true,
+        "note": "Policy evaluation only, not a new HTTP success claim"
+      }
+    ],
+    "elecomp-alternative.json": {
+      "id": "elecomp",
+      "url": "https://elecomp.ru/sitemap-shop-1.xml",
+      "purpose": "bounded sample of alternative product URL enumeration",
+      "robots_allowed": true,
+      "status": 200,
+      "sample_urls": [
+        "https://elecomp.ru/category/elektronnye-komponenty/",
+        "https://elecomp.ru/category/elektronnye-komponenty/poluprovodniki/",
+        "https://elecomp.ru/category/elektronnye-komponenty/poluprovodniki/diodydiodnye-mostytiristorytranzistory/"
+      ],
+      "sample_bytes": 106892,
+      "sample_allowed": [
+        true,
+        true,
+        true
+      ]
+    },
+    "promelec-alternative.json": {
+      "id": "promelec",
+      "url": "https://www.promelec.ru/sitemap/Goods.xml",
+      "purpose": "bounded sample of alternative product URL enumeration",
+      "robots_allowed": true,
+      "status": 200,
+      "sample_urls": [
+        "https://www.promelec.ru/product/36/",
+        "https://www.promelec.ru/product/340/",
+        "https://www.promelec.ru/product/341/"
+      ],
+      "sample_bytes": 385623,
+      "sample_allowed": [
+        true,
+        true,
+        true
+      ]
+    },
+    "tangenta-dns.json": [
+      {
+        "domain": "tangenta.ru",
+        "resolves": false,
+        "resolver_error": -2
+      },
+      {
+        "domain": "www.tangenta.ru",
+        "resolves": true,
+        "families": [
+          "AF_INET"
+        ]
+      }
+    ],
+    "dns.json": [
+      {
+        "id": "terra",
+        "domain": "terraelectronica.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "compel",
+        "domain": "compel.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "voltmaster",
+        "domain": "voltmaster.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "radiomag",
+        "domain": "radiomag.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "tangenta",
+        "domain": "tangenta.ru",
+        "dns_resolves": false
+      },
+      {
+        "id": "chipexpert",
+        "domain": "chipexpert.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "roboparts",
+        "domain": "roboparts.ru",
+        "dns_resolves": true
+      },
+      {
+        "id": "cqham",
+        "domain": "cqham.ru",
+        "dns_resolves": false
+      }
+    ]
+  },
+  "runtime_changes": false
+}
