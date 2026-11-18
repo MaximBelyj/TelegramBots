@@ -10,10 +10,12 @@ import httpx
 from .discovery import SOURCES, SourceUnavailable, discover, fetch_search
 from .search_index import SearchIndex, INDEX_SOURCES
 from .resource_catalog import NEW_ADAPTERS, SearchPolicy, SearchPolicyUnavailable
+from .supplier_adapters import SPECS, fetch_supplier
+from .catalog_search import ROUTES, CatalogSearch
 
 INTERVALS = {'market': 15, 'qrz': 15, 'platan': 10, 'promelec': 15}
 PROBE_QUERIES = {key: ('трансивер' if key == 'qrz' else 'DMR' if key in ('avito', 'ozon', 'wb', 'market') else 'LM358') for key in SOURCES}
-PROBE_QUERIES.update({'radioexpert': 'DMR'})
+PROBE_QUERIES.update({'radioexpert': 'DMR', **{key: row[2] for key,row in SPECS.items()}})
 MANUAL_CODES = {'proxy', 'http_401', 'http_403', 'http_498', 'challenge', 'layout', 'redirect', 'index_auth', 'index_layout', 'robots'}
 PAUSES = {'proxy': 21600, 'http_401': 21600, 'http_403': 21600, 'http_498': 21600,
           'challenge': 21600, 'http_429': 1800, 'redirect': 3600, 'layout': 3600, 'network': 300, 'index_auth': 21600, 'index_layout': 3600, 'index_budget': 0, 'robots': 21600}
@@ -23,6 +25,8 @@ class SearchEngine:
     def __init__(self, path, *, clock=time.time, sleeper=asyncio.sleep, client_factory=httpx.AsyncClient, index_key=None):
         self.path = Path(path)
         self.policies = SearchPolicy(clock)
+        self.catalogs = CatalogSearch(clock=clock,sleeper=sleeper)
+        self.coverage = {}
         key = os.getenv('BRAVE_SEARCH_API_KEY') if index_key is None else index_key
         self.index = SearchIndex(key, clock=clock, sleeper=sleeper, usage_path=self.path.with_name('brave_usage.json'),
                                  daily_limit=int(os.getenv('BRAVE_SEARCH_DAILY_LIMIT', '100'))) if key else None
@@ -35,13 +39,17 @@ class SearchEngine:
             try:
                 data = json.loads(self.path.read_text())
                 if isinstance(data, dict):
-                    self.states = {s: row for s, row in data.items() if (s in SOURCES or s.removesuffix(':brave') in INDEX_SOURCES) and isinstance(row, dict)}
+                    self.states = {s: row for s, row in data.items() if s.split(':')[0] in SOURCES and isinstance(row, dict)}
             except (OSError, ValueError):
                 pass
         self.last_request = {source: row['checked_at'] for source, row in self.states.items()
                              if isinstance(row.get('checked_at'), (int, float))}
 
     def state_key(self, source):
+        if source in SPECS:
+            return source + ':supplier' + (':v4' if source=='chipfind' else ':v2' if source=='radioshop' else '')
+        if source in ROUTES:
+            return source + ':catalog' + (':v2' if source in ('radioexpert','symmetron','rct') else '')
         return source + ':brave' if self.index and source in INDEX_SOURCES else source
 
     def state(self, source):
@@ -64,6 +72,8 @@ class SearchEngine:
 
     def status_text(self, source):
         row = self.state(source)
+        if row['status'] == 'partial':
+            return '🟡 Выборочная проверка каталога, полного поиска пока нет'
         if row['status'] == 'ready':
             return '✅ Поиск через индекс Brave, не весь каталог' if self.index and source in INDEX_SOURCES else '✅ Автопоиск: последняя проверка успешна'
         label = '🔗 Только ручная ссылка' if row['status'] in ('manual', 'unknown') else '⏳ Автопоиск на паузе'
@@ -74,7 +84,7 @@ class SearchEngine:
         return text
 
     def _success(self, source, trace):
-        self.states[self.state_key(source)] = {'status': 'ready', 'reason': 'Выдача распознана', 'checked_at': self.clock(),
+        self.states[self.state_key(source)] = {'status': 'partial' if source in self.coverage else 'ready', 'reason': 'Выдача распознана', 'checked_at': self.clock(),
                                'retry_at': 0, 'failures': 0, 'trace': trace}
         self.save()
 
@@ -103,8 +113,19 @@ class SearchEngine:
             if source not in self.clients:
                 self.clients[source] = self.client_factory(timeout=20, follow_redirects=False)
             trace = []
+            self.coverage.pop(source, None)
             try:
-                if self.index and source in INDEX_SOURCES:
+                if source in SPECS:
+                    try:
+                        items = await fetch_supplier(self.clients[source], source, query, trace, self.policies, self.sleep)
+                    except SearchPolicyUnavailable:
+                        if source != 'radioshop':raise
+                        items = await self.catalogs.fetch(source,query,self.clients[source],self.policies,trace)
+                        self.coverage[source]=items.warning
+                elif source in ROUTES:
+                    items = await self.catalogs.fetch(source,query,self.clients[source],self.policies,trace)
+                    self.coverage[source]=items.warning
+                elif self.index and source in INDEX_SOURCES:
                     items = await self.index.fetch(self.clients[source], source, query, trace=trace)
                 else:
                     from .discovery import search_url
@@ -135,6 +156,8 @@ class SearchEngine:
         reports = await discover(query, sources, fetcher=self.fetch)
         for report in reports:
             report['access_status'] = self.state(report['source'])['status']
+            if report['source'] in self.coverage:
+                report['coverage'] = self.coverage[report['source']]
             if self.index and report['source'] in INDEX_SOURCES:
                 report['retrieval'] = 'brave_index'
         return reports

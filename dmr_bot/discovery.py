@@ -8,7 +8,7 @@ import httpx
 from bs4 import BeautifulSoup
 from .sources import validate_url
 from .matching import evaluate, query_variants
-from .resource_catalog import NEW_ADAPTERS
+from .resource_catalog import NEW_ADAPTERS, SUPPLIER_ADAPTERS, CATALOG_ADAPTERS
 
 SOURCES = {
     'avito': ('Avito', 'https://www.avito.ru/rossiya?q={query}'),
@@ -37,6 +37,8 @@ SELECTORS = {'platan': 'a[href*="/cgi-bin/qwery.pl/id="]',
              'radiokot': 'a.topictitle[href]'}
 # Audited additions share the existing menu and ranking pipeline.
 SOURCES.update({key: (row['name'], row['search_url']) for key, row in NEW_ADAPTERS.items()})
+SOURCES.update({key: (row['name'], row['search_url']) for key, row in {**SUPPLIER_ADAPTERS, **CATALOG_ADAPTERS}.items()})
+QUERY_PARAMS.update({key: row['query_param'] for key, row in SUPPLIER_ADAPTERS.items()})
 PATHS.update({key: row['path_pattern'] for key, row in NEW_ADAPTERS.items()})
 QUERY_PARAMS.update({key: row['query_param'] for key, row in NEW_ADAPTERS.items()})
 SELECTORS.update({key: row['selector'] for key, row in NEW_ADAPTERS.items()})

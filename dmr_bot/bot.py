@@ -40,18 +40,22 @@ def render_report(query, reports):
         lines.append(SOURCES[source][0])
         if report.get('retrieval') == 'brave_index':
             lines.append('Источник: индекс Brave Search. Это не весь каталог; актуальные цена и наличие не проверены.')
+        if report.get('coverage'):
+            lines.append(report['coverage'])
         if report.get('warning'):
             lines.append('Часть запросов недоступна: ' + report['warning'])
         if report['error']:
             lines.extend([report['error'], search_url(source, query)])
         else:
-            lines.append(f"Найдено: {len(report['items'])} (первая доступная страница).")
+            lines.append(f"Найдено: {len(report['items'])} (в проверенной выдаче).")
             for url, item in report['items']:
                 price = item.get('price')
                 price_text = f" — {price} {item.get('currency') or ''}" if price is not None else ''
                 match = item.get('match')
                 reason = ('\nСовпало: ' + ', '.join(match['matched']) + f". Баллы: {match['score']:g}; покрытие признаков: {match['coverage']}% (не вероятность).") if match else ''
-                lines.append(f"{str(item.get('title', 'Товар'))[:200]}{price_text}{reason}\n{url}")
+                seller = ('\nПродавец: ' + str(item['seller'])) if item.get('seller') else ''
+                raw_price = ('\nУсловия цены: '+str(item['price_text'])) if item.get('price_text') and price is None else ''
+                lines.append(f"{str(item.get('title', 'Товар'))[:200]}{price_text}{seller}{raw_price}{reason}\n{url}")
     lines.append('Результаты не сохраняются в базе бота. Алгоритм поиска пока тестируется.')
     return '\n\n'.join(lines)
 

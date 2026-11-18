@@ -101,7 +101,8 @@
       "robots": {
         "url": "https://www.symmetron.ru/robots.txt",
         "http": 200,
-        "search_allowed": true
+        "search_allowed": false,
+        "correction": "v0.2.0: wildcard-aware policy; HTML search forbidden, catalog sampling only"
       },
       "note": "Разметка реальной выдачи и robots.txt проверены. Это не гарантия последующего доступа или наличия товара.",
       "id": "symmetron"
@@ -146,7 +147,8 @@
       "robots": {
         "url": "https://chipster.ru/robots.txt",
         "http": 200,
-        "search_allowed": true
+        "search_allowed": false,
+        "correction": "v0.2.0: wildcard-aware policy; HTML search forbidden, catalog sampling only"
       },
       "note": "Разметка реальной выдачи и robots.txt проверены. Это не гарантия последующего доступа или наличия товара.",
       "id": "chipster"
@@ -169,7 +171,8 @@
       "robots": {
         "url": "https://www.radioexpert.ru/robots.txt",
         "http": 200,
-        "search_allowed": true
+        "search_allowed": false,
+        "correction": "v0.2.0: wildcard-aware policy; HTML search forbidden, catalog sampling only"
       },
       "note": "Разметка реальной выдачи и robots.txt проверены. Это не гарантия последующего доступа или наличия товара.",
       "id": "radioexpert"
@@ -192,7 +195,8 @@
       "robots": {
         "url": "https://www.rct.ru/robots.txt",
         "http": 200,
-        "search_allowed": true
+        "search_allowed": false,
+        "correction": "v0.2.0: wildcard-aware policy; HTML search forbidden, catalog sampling only"
       },
       "note": "Разметка реальной выдачи и robots.txt проверены. Это не гарантия последующего доступа или наличия товара.",
       "id": "rct"
@@ -255,12 +259,14 @@
       "domain": "efo.ru",
       "url": "https://efo.ru/",
       "category": "дистрибьютор компонентов",
-      "status": "candidate",
+      "status": "supplier_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "ЭФО - дистрибьютор электронных компонентов с 1991 г.",
       "error": null,
-      "note": "Найдена форма поиска склада. Проверенный адрес перенаправляет на HTTP; небезопасный переход не выполнен. Нужен корректный HTTPS-адрес."
+      "note": "Найдена форма поиска склада. Проверенный адрес перенаправляет на HTTP; небезопасный переход не выполнен. Нужен корректный HTTPS-адрес.",
+      "search_url": "https://efo.ru/search/stock.html?q={query}",
+      "query_param": "q"
     },
     {
       "id": "voltmaster",
@@ -281,7 +287,7 @@
       "domain": "elecomp.ru",
       "url": "https://elecomp.ru/",
       "category": "магазин радиодеталей",
-      "status": "candidate",
+      "status": "catalog_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Электронные Компоненты - один из крупнейших магазинов радиокомпонентов в России",
@@ -291,7 +297,9 @@
         "http": 200,
         "search_allowed": false
       },
-      "note": "Выдача найдена, но robots.txt запрещает путь поиска. Нужен согласованный доступ/фид; автоматический поиск не включён."
+      "note": "Выдача найдена, но robots.txt запрещает путь поиска. Нужен согласованный доступ/фид; автоматический поиск не включён.",
+      "search_url": "https://elecomp.ru/search/?query={query}",
+      "query_param": "q"
     },
     {
       "id": "zip2002",
@@ -299,12 +307,14 @@
       "domain": "zip-2002.ru",
       "url": "https://zip-2002.ru/",
       "category": "компоненты и запчасти",
-      "status": "candidate",
+      "status": "catalog_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 403,
       "observed_title": null,
       "error": null,
-      "note": "Доступ/ассортимент не подтверждён: 403. Без повторов и обхода защиты."
+      "note": "Доступ/ассортимент не подтверждён: 403. Без повторов и обхода защиты.",
+      "search_url": "https://www.zip-2002.ru/search/?query={query}",
+      "query_param": "q"
     },
     {
       "id": "radiodetali",
@@ -312,12 +322,14 @@
       "domain": "radiodetali.com",
       "url": "https://radiodetali.com/",
       "category": "поставщик компонентов",
-      "status": "candidate",
+      "status": "supplier_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Сеть электронных компонентов",
       "error": null,
-      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск."
+      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск.",
+      "search_url": "https://radiodetali.com/catalog?q={query}",
+      "query_param": "q"
     },
     {
       "id": "radioshop",
@@ -325,12 +337,14 @@
       "domain": "radio-shop.ru",
       "url": "https://radio-shop.ru/",
       "category": "радиосвязь и оборудование",
-      "status": "candidate",
+      "status": "supplier_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Интернет магазин Radio Shop один из ведущих поставщиков оборудования на рынке связи и систем безопасности в России - Radio-shop.ru",
       "error": null,
-      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск."
+      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск.",
+      "search_url": "https://radio-shop.ru/search/?search={query}",
+      "query_param": "search"
     },
     {
       "id": "radiomag",
@@ -351,7 +365,7 @@
       "domain": "chipfind.ru",
       "url": "https://www.chipfind.ru/",
       "category": "агрегатор поставщиков",
-      "status": "candidate",
+      "status": "supplier_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Электронные компоненты и радиодетали | ChipFind.ru",
@@ -359,7 +373,9 @@
       "aliases": [
         "chipfind.net"
       ],
-      "note": "Найден поиск по поставщикам и документация. Требуется отдельный разбор предложений; datasheet не считается предложением товара."
+      "note": "Найден поиск по поставщикам и документация. Требуется отдельный разбор предложений; datasheet не считается предложением товара.",
+      "search_url": "https://www.chipfind.ru/search/index.htm?part={query}",
+      "query_param": "part"
     },
     {
       "id": "getchip",
@@ -367,7 +383,7 @@
       "domain": "getchip.ru",
       "url": "https://getchip.ru/",
       "category": "промышленная автоматика: требует уточнения ассортимента",
-      "status": "candidate",
+      "status": "excluded_not_supplier",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Температура и управление OwenCloud",
@@ -380,7 +396,7 @@
       "domain": "amperka.ru",
       "url": "https://amperka.ru/",
       "category": "электроника и образовательные наборы",
-      "status": "candidate",
+      "status": "catalog_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Амперка / Всё для Arduino и Raspberry Pi! Электронные компоненты и образовательные наборы",
@@ -390,7 +406,9 @@
         "http": 200,
         "search_allowed": false
       },
-      "note": "Выдача найдена, но robots.txt запрещает путь поиска. Нужен согласованный доступ/фид; автоматический поиск не включён."
+      "note": "Выдача найдена, но robots.txt запрещает путь поиска. Нужен согласованный доступ/фид; автоматический поиск не включён.",
+      "search_url": "https://amperka.ru/search?q={query}",
+      "query_param": "q"
     },
     {
       "id": "roboparts",
@@ -411,12 +429,14 @@
       "domain": "roboshop.spb.ru",
       "url": "https://roboshop.spb.ru/",
       "category": "робототехника и электроника",
-      "status": "candidate",
+      "status": "catalog_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "RoboShop",
       "error": null,
-      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск."
+      "note": "Подключение ещё не реализовано; HTTP 200 главной страницы не подтверждает поиск.",
+      "search_url": "https://roboshop.spb.ru/index.php?route=product/search&search={query}",
+      "query_param": "q"
     },
     {
       "id": "radiosila",
@@ -424,12 +444,14 @@
       "domain": "radiosila.ru",
       "url": "https://radiosila.ru/",
       "category": "радиосвязь и антенны",
-      "status": "candidate",
+      "status": "supplier_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Радиосила - рации, купить и настроить, антенны для раций, радиомастерская - купить на radiosila.ru",
       "error": null,
-      "note": "Найдена POST-форма поиска; способ передачи/разбор предложений ещё не проверены."
+      "note": "Найдена POST-форма поиска; способ передачи/разбор предложений ещё не проверены.",
+      "search_url": "https://radiosila.ru/component/search/?searchword={query}&ordering=&searchphrase=all",
+      "query_param": "searchword"
     },
     {
       "id": "cqham",
@@ -489,12 +511,14 @@
       "domain": "ruselt.ru",
       "url": "https://www.ruselt.ru/",
       "category": "промышленное электропитание",
-      "status": "candidate",
+      "status": "catalog_adapter",
       "checked_on": "2026-11-18",
       "homepage_http": 200,
       "observed_title": "Группа РУСЭЛТ - производство и поставка промышленного электротехнического оборудования: ибп, стабилизаторов напряжения, преобразователей частоты и электродвигателей",
       "error": null,
-      "note": "Каталог товаров подтверждён, но влияние параметра q на выдачу не доказано; не подключён как поиск."
+      "note": "Каталог товаров подтверждён, но влияние параметра q на выдачу не доказано; не подключён как поиск.",
+      "search_url": "https://www.ruselt.ru/catalog/",
+      "query_param": "q"
     }
   ],
   "excluded": [

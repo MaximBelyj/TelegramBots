@@ -52,7 +52,7 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
         calls = []
         def handler(request):
             calls.append(request)
-            return httpx.Response(429, headers={'retry-after': '90000'}) if len(calls) == 1 else httpx.Response(200, text=HTML)
+            return httpx.Response(429, headers={'retry-after': '90000'}) if len(calls) == 1 else httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]})
         e = self.engine(handler)
         with self.assertRaises(SourceUnavailable):
             await e.fetch('platan', 'LM358', probe=True)
@@ -67,7 +67,7 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
         calls = []
         def handler(request):
             calls.append(request)
-            return httpx.Response(200, text=HTML, headers={'set-cookie': 'ordinary=ok; Path=/'})
+            return httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]}, headers={'set-cookie': 'ordinary=ok; Path=/'})
         e = self.engine(handler)
         await e.fetch('platan', 'LM358', probe=True)
         await e.fetch('platan', 'LM358')
@@ -76,14 +76,14 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('ordinary', self.path.read_text())
 
     async def test_spacing_survives_restart(self):
-        first = self.engine(lambda request: httpx.Response(200, text=HTML))
+        first = self.engine(lambda request: httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]}))
         await first.fetch('platan', 'LM358', probe=True)
-        fresh = self.engine(lambda request: httpx.Response(200, text=HTML))
+        fresh = self.engine(lambda request: httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]}))
         await fresh.fetch('platan', 'LM358')
         self.assertEqual(self.sleeps, [10])
 
     async def test_cancelled_queue_does_not_block_next_request(self):
-        e = self.engine(lambda request: httpx.Response(200, text=HTML))
+        e = self.engine(lambda request: httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]}))
         await e.fetch('platan', 'LM358', probe=True)
         gate = asyncio.Event()
         entered = asyncio.Event()
@@ -103,7 +103,7 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
         calls = []
         def handler(request):
             calls.append(request)
-            return httpx.Response(200, text=HTML)
+            return httpx.Response(200, json={'items': [{'NOM_N': '123', 'NAME': 'LM358'}]})
         e = self.engine(handler)
         report = (await e.discover('LM358', ['platan']))[0]
         self.assertEqual(report['access_status'], 'unknown')

@@ -14,14 +14,14 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(len(rows), 36)
         self.assertEqual(len({r['id'] for r in rows}), len(rows))
         self.assertEqual(len({r['domain'] for r in rows}), len(rows))
-        self.assertEqual(len(SOURCES), 14)
+        self.assertEqual(len(SOURCES), 24)
         self.assertEqual(len(NEW_ADAPTERS), 5)
-        self.assertEqual(len([r for r in rows if r['status'] == 'candidate']), 22)
+        self.assertEqual(len([r for r in rows if r['status'] == 'candidate']), 11)
         for row in rows:
             if row['status'] == 'candidate':
                 self.assertNotIn(row['id'], SOURCES)
         for row in NEW_ADAPTERS.values():
-            self.assertTrue(row['robots']['search_allowed'])
+            self.assertEqual(row['robots']['search_allowed'], row['id']=='dessy')
             self.assertEqual(row['search_http'], 200)
 
     def test_new_card_layouts_avoid_navigation_categories(self):
@@ -70,9 +70,18 @@ class PolicyTests(unittest.IsolatedAsyncioTestCase):
             e = SearchEngine(Path(folder)/'health.json', index_key='', client_factory=factory)
             try:
                 with self.assertRaises(SourceUnavailable) as error:
-                    await e.fetch('symmetron', 'LM358', probe=True)
+                    await e.fetch('efo', 'LM358', probe=True)
                 self.assertEqual(error.exception.code, 'robots')
-                self.assertEqual(e.state('symmetron')['status'], 'manual')
+                self.assertEqual(e.state('efo')['status'], 'manual')
             finally:
                 await e.close()
         self.assertEqual([r.url.path for r in calls], ['/robots.txt'])
+
+    async def test_wildcards_allow_precedence_and_delay(self):
+        text='User-agent: *\nDisallow: /*?*\nDisallow: /search*\nAllow: /public?feed=1\nCrawl-delay: 10\n'
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r:httpx.Response(200,text=text))) as client:
+            policy=SearchPolicy(lambda:100)
+            for url in ('https://chipster.ru/search.html?q=LM358','https://chipster.ru/catalog/?q=LM358'):
+                with self.assertRaises(SearchPolicyUnavailable):await policy.check('chipster',url,client)
+            await policy.check('chipster','https://chipster.ru/public?feed=1',client)
+            self.assertEqual(policy.delay('chipster','https://chipster.ru/catalog/'),10)
